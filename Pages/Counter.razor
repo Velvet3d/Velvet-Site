@@ -1,0 +1,24 @@
+﻿@page "/counter"
+
+<PageTitle>Counter - Velvet</PageTitle>
+
+<div class="demo-page">
+    <div class="demo-content">
+        <h1>Counter Demo</h1>
+        <p class="demo-description">Interactive counter demonstration</p>
+        
+        <div class="counter-display">
+            <div class="count-value">@currentCount</div>
+            <button class="btn btn-primary" @onclick="IncrementCount">Increment Count</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+}
