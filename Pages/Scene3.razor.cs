@@ -1,39 +1,48 @@
-using System.Net.Http;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Velvet.Blazor;
-using Velvet.Core.Animation;
-using Velvet.Core.Assets.Gltf;
+using Velvet.Core.Engine;
+using Velvet.Core.Geometry;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.WebGL;
 using BlazorApp = Velvet.Blazor.VelvetApp;
-using EngineScene = Velvet.Core.Engine.Scene;
 
 namespace Velvet_Site.Pages;
 
-public partial class Scene2 : ComponentBase, IAsyncDisposable
+public partial class Scene3 : ComponentBase, IAsyncDisposable
 {
     [Inject] private IJSRuntime JS { get; set; } = default!;
-    [Inject] private HttpClient Http { get; set; } = default!;
 
     private ElementReference canvasRef;
 
     private BlazorApp? app;
-    private EngineScene? scene;
+    private Scene? scene;
     private Camera? camera;
     private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
     private SpotLight? spot;
-    private Animator? animator;
-    private List<AnimationClip>? animationClips;
 
     private bool isMouseDown;
     private int lastMouseX;
     private int lastMouseY;
+
+    // Debug UI properties
+    private bool directionalEnabled = true;
+    private float directionalIntensity = 1.1f;
+    private string directionalColor = "#ffffff";
+
+    private bool pointEnabled = true;
+    private float pointIntensity = 2.0f;
+    private string pointColor = "#fff2e6";
+    private float pointPosY = 1.5f;
+
+    private bool spotEnabled = false;
+    private float spotIntensity = 5.0f;
+    private string spotColor = "#ffffff";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -46,10 +55,10 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
         var canvasHeight = (int)(rect.Height * dpr);
         await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
 
-        app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateSkinnedAsync);
+        app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
 
         camera = new Camera(
-            position: new Vector3(0, 20f, 2.6f),
+            position: new Vector3(0, 2f, 5f),
             target: new Vector3(0, 0, 0),
             up: Vector3.UnitY,
             fovYRadians: 60.0f * (System.MathF.PI / 180.0f),
@@ -60,20 +69,19 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
         directional = new DirectionalLight(
             direction: new Vector3(0.4f, -1.0f, -0.25f),
             color: new Vector3(1, 1, 1),
-            intensity: 1.1f);
+            intensity: directionalIntensity);
 
         point = new PointLight(
-            position: new Vector3(1.5f, 1.1f, 1.6f),
-            color: new Vector3(1.0f, 0.95f, 0.9f),
-            intensity: 2.0f,
+            position: new Vector3(2f, pointPosY, 2f),
+            color: HexToVector3(pointColor),
+            intensity: pointIntensity,
             constant: 1.0f,
             linear: 0.14f,
             quadratic: 0.07f);
 
-        // Keep spotlight uniforms valid; disable by setting intensity to 0.
         spot = new SpotLight(
-            position: new Vector3(0.0f, 2.2f, 2.2f),
-            direction: new Vector3(0.0f, -1.0f, -1.0f),
+            position: new Vector3(0.0f, 3.0f, 2.0f),
+            direction: new Vector3(0.0f, -1.0f, -0.5f),
             color: new Vector3(1.0f, 1.0f, 1.0f),
             intensity: 0.0f,
             cutoff: 12.0f * (System.MathF.PI / 180.0f),
@@ -82,36 +90,54 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             linear: 0.09f,
             quadratic: 0.032f);
 
-        var bytes = await Http.GetByteArrayAsync("models/Fox.glb");
-        var loadResult = await GltfLoader.LoadSceneWithAnimations(bytes, "models");
-        scene = loadResult.Scene;
-        animationClips = loadResult.Animations;
+        // Create cube node
+        var cubeGeometry = new CubeGeometry();
+        var cubeMesh = new Mesh(cubeGeometry);
+        var cubeNode = new SceneNode(
+            localTransform: Matrix.Trs(
+                new Vector3(-1.5f, 0, 0),
+                Quaternion.Identity,
+                new Vector3(1f, 1f, 1f)),
+            meshes: new List<Mesh> { cubeMesh },
+            children: new List<SceneNode>(),
+            name: "Cube"
+        );
 
-        animator = new Animator(scene);
-        if (animationClips.Count > 0)
-        {
-            animator.PlayClip(animationClips[1]);
-        }
+        // Create sphere node
+        var sphereGeometry = new SphereGeometry(latitudeSegments: 24, longitudeSegments: 32, radius: 0.8f);
+        var sphereMesh = new Mesh(sphereGeometry);
+        var sphereNode = new SceneNode(
+            localTransform: Matrix.Trs(
+                new Vector3(1.5f, 0, 0),
+                Quaternion.Identity,
+                new Vector3(1f, 1f, 1f)),
+            meshes: new List<Mesh> { sphereMesh },
+            children: new List<SceneNode>(),
+            name: "Sphere"
+        );
+
+        // Create the scene with both nodes as roots
+        scene = new Scene(new List<SceneNode> { cubeNode, sphereNode });
 
         app.Add(scene);
 
         var bounds = scene.ComputeBounds();
-        camera.Frame(bounds, frameMultiplier: 1.3f);
+        camera.Frame(bounds, frameMultiplier: 2.0f);
 
         app.Camera = camera;
         app.DirectionalLight = directional;
         app.PointLight = point;
         app.SpotLight = spot;
-        app.SetDirectionalEnabled(true);
-        app.SetPointEnabled(true);
+        app.SetDirectionalEnabled(directionalEnabled);
+        app.SetPointEnabled(pointEnabled);
 
         orbitController = new OrbitController(
-            target: bounds.Center,
+            target: Vector3.Zero,
             yaw: 0f,
             pitch: 0.3f,
-            distance: (bounds.Center - camera.Position).Length,
-            minDistance: bounds.Radius * 0.5f,
-            maxDistance: bounds.Radius * 10f);
+            distance: 5f,
+            minDistance: 2f,
+            maxDistance: 15f);
 
         await app.StartAsync(OnFrameAsync);
     }
@@ -160,17 +186,49 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
 
     private async Task OnFrameAsync(float dt)
     {
-        if (app is null || camera is null || orbitController is null) return;
+        if (app is null || camera is null || orbitController is null || scene is null) return;
 
         orbitController.UpdateCamera(camera);
 
-        if (scene is not null && animator is not null)
+        // Update lights based on debug UI
+        if (directional is not null)
         {
-            animator.Update(dt);
-            app.Render(scene);
+            directional.Intensity = directionalEnabled ? directionalIntensity : 0f;
+            directional.Color = HexToVector3(directionalColor);
         }
 
+        if (point is not null)
+        {
+            point.Intensity = pointEnabled ? pointIntensity : 0f;
+            point.Color = HexToVector3(pointColor);
+            point.Position = new Vector3(2f, pointPosY, 2f);
+        }
+
+        if (spot is not null)
+        {
+            spot.Intensity = spotEnabled ? spotIntensity : 0f;
+            spot.Color = HexToVector3(spotColor);
+        }
+
+        app.SetDirectionalEnabled(directionalEnabled);
+        app.SetPointEnabled(pointEnabled);
+
+        app.Render(scene);
+
         await Task.CompletedTask;
+    }
+
+    private Vector3 HexToVector3(string hex)
+    {
+        hex = hex.TrimStart('#');
+        if (hex.Length == 6)
+        {
+            var r = Convert.ToInt32(hex.Substring(0, 2), 16) / 255f;
+            var g = Convert.ToInt32(hex.Substring(2, 2), 16) / 255f;
+            var b = Convert.ToInt32(hex.Substring(4, 2), 16) / 255f;
+            return new Vector3(r, g, b);
+        }
+        return new Vector3(1, 1, 1);
     }
 
     public async ValueTask DisposeAsync()
@@ -180,4 +238,5 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             await app.StopAsync();
         }
     }
+
 }

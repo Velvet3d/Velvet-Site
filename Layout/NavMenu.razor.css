@@ -95,6 +95,7 @@
 .gradient-4 { background: linear-gradient(135deg, #222222 0%, #222222 100%); }
 .gradient-5 { background: linear-gradient(135deg, #222222 0%, #222222 100%); }
 .gradient-6 { background: linear-gradient(135deg, #222222 0%, #222222 100%); }
+.gradient-7 { background: linear-gradient(135deg, #ff6b6b 0%, #4ecdc4 50%, #ffe66d 100%); }
 
 .example-title {
     font-size: 17px;

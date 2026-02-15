@@ -1,0 +1,145 @@
+.scene3-page {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+
+.scene3-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    background: #1a1a1a;
+    cursor: grab;
+}
+
+.scene3-canvas:active {
+    cursor: grabbing;
+}
+
+.debug-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 20px;
+    color: #fff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-width: 280px;
+    max-width: 320px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.debug-title {
+    margin: 0 0 20px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    border-bottom: 2px solid #666;
+    padding-bottom: 10px;
+}
+
+.debug-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+}
+
+.debug-section:last-child {
+    margin-bottom: 0;
+}
+
+.debug-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #4af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.debug-section label {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    font-size: 13px;
+    gap: 10px;
+}
+
+.debug-section label:last-child {
+    margin-bottom: 0;
+}
+
+.debug-section input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+    accent-color: #4af;
+}
+
+.debug-section input[type="range"] {
+    flex: 1;
+    cursor: pointer;
+    accent-color: #4af;
+    height: 6px;
+}
+
+.debug-section input[type="color"] {
+    cursor: pointer;
+    width: 40px;
+    height: 30px;
+    border: 2px solid #444;
+    border-radius: 4px;
+    background: transparent;
+}
+
+.debug-section span {
+    min-width: 35px;
+    text-align: right;
+    color: #aaa;
+    font-size: 12px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Scrollbar styling for overflow */
+.debug-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.debug-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.debug-panel::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 4px;
+}
+
+.debug-panel::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .debug-panel {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+        font-size: 12px;
+    }
+
+    .debug-title {
+        font-size: 16px;
+    }
+
+    .debug-section h4 {
+        font-size: 12px;
+    }
+}

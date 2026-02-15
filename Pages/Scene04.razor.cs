@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Velvet.Blazor;
-using Velvet.Core.Animation;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
@@ -14,7 +13,7 @@ using EngineScene = Velvet.Core.Engine.Scene;
 
 namespace Velvet_Site.Pages;
 
-public partial class Scene2 : ComponentBase, IAsyncDisposable
+public partial class Scene04 : ComponentBase, IAsyncDisposable
 {
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private HttpClient Http { get; set; } = default!;
@@ -28,8 +27,6 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
     private DirectionalLight? directional;
     private PointLight? point;
     private SpotLight? spot;
-    private Animator? animator;
-    private List<AnimationClip>? animationClips;
 
     private bool isMouseDown;
     private int lastMouseX;
@@ -46,11 +43,11 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
         var canvasHeight = (int)(rect.Height * dpr);
         await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
 
-        app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateSkinnedAsync);
+        app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
 
         camera = new Camera(
-            position: new Vector3(0, 20f, 2.6f),
-            target: new Vector3(0, 0, 0),
+            position: new Vector3(0, 0.6f, 2.2f),
+            target: new Vector3(0, 0.2f, 0),
             up: Vector3.UnitY,
             fovYRadians: 60.0f * (System.MathF.PI / 180.0f),
             aspectRatio: 16.0f / 9.0f,
@@ -82,21 +79,13 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             linear: 0.09f,
             quadratic: 0.032f);
 
-        var bytes = await Http.GetByteArrayAsync("models/Fox.glb");
-        var loadResult = await GltfLoader.LoadSceneWithAnimations(bytes, "models");
-        scene = loadResult.Scene;
-        animationClips = loadResult.Animations;
-
-        animator = new Animator(scene);
-        if (animationClips.Count > 0)
-        {
-            animator.PlayClip(animationClips[1]);
-        }
+        var bytes = await Http.GetByteArrayAsync("models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
+        scene = await GltfLoader.LoadScene(bytes, "models/gltf/DamagedHelmet/glTF-Embedded");
 
         app.Add(scene);
 
         var bounds = scene.ComputeBounds();
-        camera.Frame(bounds, frameMultiplier: 1.3f);
+        camera.Frame(bounds, frameMultiplier: 1.6f);
 
         app.Camera = camera;
         app.DirectionalLight = directional;
@@ -108,7 +97,7 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
         orbitController = new OrbitController(
             target: bounds.Center,
             yaw: 0f,
-            pitch: 0.3f,
+            pitch: 0.2f,
             distance: (bounds.Center - camera.Position).Length,
             minDistance: bounds.Radius * 0.5f,
             maxDistance: bounds.Radius * 10f);
@@ -160,15 +149,10 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
 
     private async Task OnFrameAsync(float dt)
     {
-        if (app is null || camera is null || orbitController is null) return;
+        if (app is null || camera is null || orbitController is null || scene is null) return;
 
         orbitController.UpdateCamera(camera);
-
-        if (scene is not null && animator is not null)
-        {
-            animator.Update(dt);
-            app.Render(scene);
-        }
+        app.Render(scene);
 
         await Task.CompletedTask;
     }

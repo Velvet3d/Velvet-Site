@@ -1,0 +1,276 @@
+using System.Net.Http;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
+using Velvet.Blazor;
+using Velvet.Core.Assets.Gltf;
+using Velvet.Core.Engine;
+using Velvet.Core.Math;
+using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Lighting;
+using Velvet.WebGL;
+using BlazorApp = Velvet.Blazor.VelvetApp;
+
+namespace Velvet_Site.Pages;
+
+public partial class MaterialDemo : ComponentBase, IAsyncDisposable
+{
+    [Inject] private IJSRuntime JS { get; set; } = default!;
+    [Inject] private HttpClient Http { get; set; } = default!;
+
+    private ElementReference canvasRef;
+
+    private BlazorApp? app;
+    private Scene? scene;
+    private Camera? camera;
+    private OrbitController? orbitController;
+    private DirectionalLight? directional;
+    private PointLight? point;
+
+    private bool isMouseDown;
+    private int lastMouseX;
+    private int lastMouseY;
+
+    // Debug UI properties
+    private bool directionalEnabled = true;
+    private float directionalIntensity = 1.2f;
+    private string directionalColor = "#ffffff";
+
+    private bool pointEnabled = true;
+    private float pointIntensity = 2.5f;
+    private string pointColor = "#fff2e6";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        // Fix canvas pixelation by setting correct resolution
+        var rect = await JS.InvokeAsync<CanvasRect>("CanvasHelpers.getCanvasRect", canvasRef);
+        var dpr = await JS.InvokeAsync<double>("CanvasHelpers.getDevicePixelRatio");
+        var canvasWidth = (int)(rect.Width * dpr);
+        var canvasHeight = (int)(rect.Height * dpr);
+        await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
+
+        app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
+
+        camera = new Camera(
+            position: new Vector3(0, 2f, 7f),
+            target: new Vector3(0, 0, 0),
+            up: Vector3.UnitY,
+            fovYRadians: 50.0f * (System.MathF.PI / 180.0f),
+            aspectRatio: 16.0f / 9.0f,
+            nearPlane: 0.1f,
+            farPlane: 100.0f);
+
+        directional = new DirectionalLight(
+            direction: new Vector3(0.3f, -1.0f, -0.3f),
+            color: HexToVector3(directionalColor),
+            intensity: directionalIntensity);
+
+        point = new PointLight(
+            position: new Vector3(3f, 2.5f, 3f),
+            color: HexToVector3(pointColor),
+            intensity: pointIntensity,
+            constant: 1.0f,
+            linear: 0.14f,
+            quadratic: 0.07f);
+
+        // Load Suzanne model
+        var modelPath = "models/gltf/suzanne.glb";
+        var bytes = await Http.GetByteArrayAsync(modelPath);
+        var loadedScene = await GltfLoader.LoadScene(bytes);
+
+        if (loadedScene == null || loadedScene.Roots.Count == 0)
+        {
+            Console.WriteLine($"Failed to load model: {modelPath}");
+            return;
+        }
+
+        var rootNodes = new List<SceneNode>();
+
+        // Create three material variations
+        // Material 1: Matte Red (low ambient, standard diffuse)
+        var matteMaterial = new Material(
+            albedoColor: new Vector3(1.0f, 0.42f, 0.42f), // Red
+            ambientStrength: 0.03f,
+            diffuseStrength: 0.9f,
+            unlit: false
+        );
+
+        // Material 2: Standard Cyan (balanced lighting)
+        var standardMaterial = new Material(
+            albedoColor: new Vector3(0.31f, 0.80f, 0.77f), // Cyan
+            ambientStrength: 0.08f,
+            diffuseStrength: 1.0f,
+            unlit: false
+        );
+
+        // Material 3: Bright Yellow (high ambient and diffuse)
+        var brightMaterial = new Material(
+            albedoColor: new Vector3(1.0f, 0.90f, 0.43f), // Yellow
+            ambientStrength: 0.15f,
+            diffuseStrength: 1.2f,
+            unlit: false
+        );
+
+        // Create three instances of Suzanne with different materials
+        var materials = new[] { matteMaterial, standardMaterial, brightMaterial };
+        var positions = new[] { -2.5f, 0f, 2.5f };
+        var names = new[] { "Suzanne_Matte", "Suzanne_Standard", "Suzanne_Bright" };
+
+        for (int i = 0; i < 3; i++)
+        {
+            var suzanneNode = CloneSceneNode(loadedScene.Roots[0]);
+            suzanneNode = new SceneNode(
+                localTransform: Matrix.Trs(
+                    new Vector3(positions[i], 0, 0),
+                    Quaternion.Identity,
+                    new Vector3(1.0f, 1.0f, 1.0f)
+                ),
+                meshes: suzanneNode.Meshes,
+                children: suzanneNode.Children,
+                name: names[i]
+            );
+
+            // Apply material to all meshes
+            foreach (var mesh in GetAllMeshes(suzanneNode))
+            {
+                mesh.Material = materials[i];
+            }
+
+            rootNodes.Add(suzanneNode);
+        }
+
+        scene = new Scene(rootNodes);
+        app.Add(scene);
+
+        var bounds = scene.ComputeBounds();
+        camera.Frame(bounds, frameMultiplier: 1.5f);
+
+        app.Camera = camera;
+        app.DirectionalLight = directional;
+        app.PointLight = point;
+        app.SetDirectionalEnabled(directionalEnabled);
+        app.SetPointEnabled(pointEnabled);
+
+        orbitController = new OrbitController(
+            target: Vector3.Zero,
+            yaw: 0.3f,
+            pitch: 0.15f,
+            distance: 7f,
+            minDistance: 3f,
+            maxDistance: 20f);
+
+        await app.StartAsync(OnFrameAsync);
+    }
+
+    private SceneNode CloneSceneNode(SceneNode original)
+    {
+        var clonedChildren = original.Children.Select(child => CloneSceneNode(child)).ToList();
+        return new SceneNode(
+            localTransform: original.LocalTransform,
+            meshes: original.Meshes,
+            children: clonedChildren,
+            name: original.Name
+        );
+    }
+
+    private List<Mesh> GetAllMeshes(SceneNode node)
+    {
+        var meshes = new List<Mesh>(node.Meshes);
+        foreach (var child in node.Children)
+        {
+            meshes.AddRange(GetAllMeshes(child));
+        }
+        return meshes;
+    }
+
+    private void OnCanvasMouseDown(MouseEventArgs e)
+    {
+        isMouseDown = true;
+        lastMouseX = (int)e.ClientX;
+        lastMouseY = (int)e.ClientY;
+    }
+
+    private void OnCanvasMouseMove(MouseEventArgs e)
+    {
+        if (!isMouseDown || orbitController == null) return;
+
+        int dx = (int)e.ClientX - lastMouseX;
+        int dy = (int)e.ClientY - lastMouseY;
+        lastMouseX = (int)e.ClientX;
+        lastMouseY = (int)e.ClientY;
+
+        var yawDelta = -dx * 0.005f;
+        var pitchDelta = dy * 0.005f;
+
+        orbitController.ApplyYaw(yawDelta);
+        orbitController.ApplyPitch(pitchDelta);
+    }
+
+    private void OnCanvasMouseUp(MouseEventArgs e)
+    {
+        isMouseDown = false;
+    }
+
+    private void OnCanvasMouseLeave(MouseEventArgs e)
+    {
+        isMouseDown = false;
+    }
+
+    private void OnCanvasWheel(WheelEventArgs e)
+    {
+        if (orbitController == null) return;
+
+        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
+        orbitController.ApplyZoomMultiplier(zoomMultiplier);
+    }
+
+    private async Task OnFrameAsync(float deltaTime)
+    {
+        if (camera == null || orbitController == null || scene == null || app == null) return;
+
+        // Update camera from orbit controller
+        orbitController.UpdateCamera(camera);
+
+        // Update light properties from UI
+        if (directional != null)
+        {
+            directional.Intensity = directionalEnabled ? directionalIntensity : 0f;
+            directional.Color = HexToVector3(directionalColor);
+        }
+
+        if (point != null)
+        {
+            point.Intensity = pointEnabled ? pointIntensity : 0f;
+            point.Color = HexToVector3(pointColor);
+        }
+
+        app.SetDirectionalEnabled(directionalEnabled);
+        app.SetPointEnabled(pointEnabled);
+
+        app.Render(scene);
+
+        await Task.CompletedTask;
+    }
+
+    private static Vector3 HexToVector3(string hex)
+    {
+        hex = hex.TrimStart('#');
+        if (hex.Length != 6) return new Vector3(1, 1, 1);
+
+        var r = Convert.ToInt32(hex.Substring(0, 2), 16) / 255f;
+        var g = Convert.ToInt32(hex.Substring(2, 2), 16) / 255f;
+        var b = Convert.ToInt32(hex.Substring(4, 2), 16) / 255f;
+
+        return new Vector3(r, g, b);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (app != null)
+        {
+            await app.StopAsync();
+        }
+    }
+}
