@@ -1,0 +1,57 @@
+@page "/custom-material-demo"
+
+<div class="custom-material-page">
+    <canvas @ref="canvasRef"
+            class="custom-material-canvas"
+            @onmousedown="OnCanvasMouseDown"
+            @onmousemove="OnCanvasMouseMove"
+            @onmouseup="OnCanvasMouseUp"
+            @onwheel="OnCanvasWheel"
+            @onmouseleave="OnCanvasMouseLeave"></canvas>
+
+    <div class="debug-panel">
+        <h3 class="debug-title">Custom Material System Demo</h3>
+        <p class="demo-description">Demonstrates the new Material class with custom shader uniforms</p>
+        
+        <div class="debug-section">
+            <h4>Custom Material Properties</h4>
+            <label>
+                Color R: <input type="range" min="0" max="1" step="0.01" @bind="colorR" @bind:event="oninput" />
+                <span>@colorR.ToString("F2")</span>
+            </label>
+            <label>
+                Color G: <input type="range" min="0" max="1" step="0.01" @bind="colorG" @bind:event="oninput" />
+                <span>@colorG.ToString("F2")</span>
+            </label>
+            <label>
+                Color B: <input type="range" min="0" max="1" step="0.01" @bind="colorB" @bind:event="oninput" />
+                <span>@colorB.ToString("F2")</span>
+            </label>
+            <label>
+                Metallic: <input type="range" min="0" max="1" step="0.01" @bind="metallic" @bind:event="oninput" />
+                <span>@metallic.ToString("F2")</span>
+            </label>
+            <label>
+                Time Scale: <input type="range" min="0" max="3" step="0.1" @bind="timeScale" @bind:event="oninput" />
+                <span>@timeScale.ToString("F1")</span>
+            </label>
+        </div>
+
+        <div class="debug-section">
+            <h4>Material System Features</h4>
+            <ul>
+                <li>✓ IShader interface with Use(), SetFloat(), SetVector3(), SetMatrix4()</li>
+                <li>✓ Material class with Dictionary&lt;string, object&gt; properties</li>
+                <li>✓ Set() method for property storage</li>
+                <li>✓ Apply() method with type checking and uniform setting</li>
+                <li>✓ WebGLShader implementation with shader compilation</li>
+            </ul>
+        </div>
+
+        <div class="debug-section">
+            <h4>Camera Controls</h4>
+            <p>🖱️ Drag to rotate</p>
+            <p>🔍 Scroll to zoom</p>
+        </div>
+    </div>
+</div>
