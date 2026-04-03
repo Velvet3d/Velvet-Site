@@ -8,9 +8,8 @@ using Velvet.Core.Engine;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Materials;
-using Velvet.Core.Rendering.Shaders;
 using Velvet.WebGL;
-using System.Collections.Generic;
+using Velvet.WebGL.Shaders;
 using BlazorApp = Velvet.Blazor.VelvetApp;
 
 namespace Velvet_Site.Pages;
@@ -24,6 +23,7 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
 
     private BlazorApp? app;
     private Velvet.Core.Rendering.Materials.Material? customMaterial;
+    private WebGLShader? shader;
     
     private Scene? scene;
     private Camera? camera;
@@ -53,8 +53,8 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
-        var shaderAdapter = new ShaderProgramAdapter(app.Program);
-        customMaterial = new Velvet.Core.Rendering.Materials.Material(shaderAdapter);
+        shader = new WebGLShader(app.Program);
+        customMaterial = new Velvet.Core.Rendering.Materials.Material(shader);
         customMaterial.Set("uBaseColor", new Vector3(colorR, colorG, colorB));
         customMaterial.Set("uAmbientStrength", 0.25f);
 
@@ -115,7 +115,11 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         beforeDrawMesh: mesh =>
         {
             customMaterial.Apply();
-            return shaderAdapter.FlushAsync();
+            if (shader is not null)
+            {
+                return shader.FlushAsync();
+            }
+            return Task.CompletedTask;
         });
     }
 
@@ -165,49 +169,6 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         if (app is not null)
         {
             await app.StopAsync();
-        }
-    }
-
-    private sealed class ShaderProgramAdapter : IShader
-    {
-        private readonly ShaderProgram _program;
-        private readonly List<Task> _pendingUniformWrites = new(capacity: 8);
-
-        public ShaderProgramAdapter(ShaderProgram program)
-        {
-            _program = program ?? throw new ArgumentNullException(nameof(program));
-        }
-
-        public void Use()
-        {
-            // ShaderProgram uniforms implicitly target this program.
-        }
-
-        public void SetFloat(string name, float value)
-        {
-            _pendingUniformWrites.Add(_program.SetUniform1fAsync(name, value));
-        }
-
-        public void SetVector3(string name, Vector3 value)
-        {
-            _pendingUniformWrites.Add(_program.SetUniform3fAsync(name, value.X, value.Y, value.Z));
-        }
-
-        public void SetMatrix4(string name, Matrix4 value)
-        {
-            _pendingUniformWrites.Add(_program.SetUniformMatrix4fvAsync(name, value.Data));
-        }
-
-        public async Task FlushAsync()
-        {
-            if (_pendingUniformWrites.Count == 0)
-            {
-                return;
-            }
-
-            var writes = _pendingUniformWrites.ToArray();
-            _pendingUniformWrites.Clear();
-            await Task.WhenAll(writes).ConfigureAwait(false);
         }
     }
 }

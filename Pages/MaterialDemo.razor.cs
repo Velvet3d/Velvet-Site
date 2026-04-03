@@ -8,8 +8,11 @@ using Velvet.Core.Engine;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Lighting;
+using Velvet.Core.Rendering.Materials;
 using Velvet.WebGL;
+using Velvet.WebGL.Shaders;
 using BlazorApp = Velvet.Blazor.VelvetApp;
+using NewMaterial = Velvet.Core.Rendering.Materials.Material;
 
 namespace Velvet_Site.Pages;
 
@@ -26,6 +29,13 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
+
+    // New Material system fields
+    private NewMaterial? matteMaterial;
+    private NewMaterial? standardMaterial;
+    private NewMaterial? brightMaterial;
+    private WebGLShader? shader;
+    private Dictionary<Mesh, NewMaterial> meshMaterialMap = new();
 
     private bool isMouseDown;
     private int lastMouseX;
@@ -52,6 +62,9 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
         await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
+
+        // Create shader adapter for material uniforms
+        shader = new WebGLShader(app.Program);
 
         camera = new Camera(
             position: new Vector3(0, 2f, 7f),
@@ -88,33 +101,24 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
         var rootNodes = new List<SceneNode>();
 
-        // Create three material variations
-        // Material 1: Matte Red (low ambient, standard diffuse)
-        var matteMaterial = new Material(
-            albedoColor: new Vector3(1.0f, 0.42f, 0.42f), // Red
-            ambientStrength: 0.03f,
-            diffuseStrength: 0.9f,
-            unlit: false
-        );
+        // Create three new material variations using shader-driven system
+        // Material 1: Matte Red (low ambient)
+        matteMaterial = new NewMaterial(shader);
+        matteMaterial.Set("uBaseColor", new Vector3(1.0f, 0.42f, 0.42f));
+        matteMaterial.Set("uAmbientStrength", 0.03f);
 
         // Material 2: Standard Cyan (balanced lighting)
-        var standardMaterial = new Material(
-            albedoColor: new Vector3(0.31f, 0.80f, 0.77f), // Cyan
-            ambientStrength: 0.08f,
-            diffuseStrength: 1.0f,
-            unlit: false
-        );
+        standardMaterial = new NewMaterial(shader);
+        standardMaterial.Set("uBaseColor", new Vector3(0.31f, 0.80f, 0.77f));
+        standardMaterial.Set("uAmbientStrength", 0.08f);
 
-        // Material 3: Bright Yellow (high ambient and diffuse)
-        var brightMaterial = new Material(
-            albedoColor: new Vector3(1.0f, 0.90f, 0.43f), // Yellow
-            ambientStrength: 0.15f,
-            diffuseStrength: 1.2f,
-            unlit: false
-        );
+        // Material 3: Bright Yellow (high ambient)
+        brightMaterial = new NewMaterial(shader);
+        brightMaterial.Set("uBaseColor", new Vector3(1.0f, 0.90f, 0.43f));
+        brightMaterial.Set("uAmbientStrength", 0.15f);
 
         // Create three instances of Suzanne with different materials
-        var materials = new[] { matteMaterial, standardMaterial, brightMaterial };
+        var newMaterials = new[] { matteMaterial, standardMaterial, brightMaterial };
         var positions = new[] { -2.5f, 0f, 2.5f };
         var names = new[] { "Suzanne_Matte", "Suzanne_Standard", "Suzanne_Bright" };
 
@@ -132,10 +136,10 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
                 name: names[i]
             );
 
-            // Apply material to all meshes
+            // Map all meshes in this node to their material
             foreach (var mesh in GetAllMeshes(suzanneNode))
             {
-                mesh.Material = materials[i];
+                meshMaterialMap[mesh] = newMaterials[i];
             }
 
             rootNodes.Add(suzanneNode);
@@ -161,7 +165,9 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
             minDistance: 3f,
             maxDistance: 20f);
 
-        await app.StartAsync(OnFrameAsync);
+        await app.StartAsync(
+            onFrame: OnFrameAsync,
+            beforeDrawMesh: BeforeDrawMesh);
     }
 
     private SceneNode CloneSceneNode(SceneNode original)
@@ -224,6 +230,24 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
         var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
         orbitController.ApplyZoomMultiplier(zoomMultiplier);
+    }
+
+    private async Task BeforeDrawMesh(Mesh mesh)
+    {
+        if (shader == null) return;
+
+        // Look up the material for this specific mesh
+        if (meshMaterialMap.TryGetValue(mesh, out var material))
+        {
+            // Apply the material's uniforms
+            material.Apply();
+            
+            // Flush pending uniform writes
+            if (shader is WebGLShader webglShader)
+            {
+                await webglShader.FlushAsync();
+            }
+        }
     }
 
     private async Task OnFrameAsync(float deltaTime)
