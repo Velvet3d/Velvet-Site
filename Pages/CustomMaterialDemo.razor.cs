@@ -45,13 +45,6 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
     {
         if (!firstRender) return;
 
-        // Setup canvas resolution
-        var rect = await JS.InvokeAsync<CanvasRect>("CanvasHelpers.getCanvasRect", canvasRef);
-        var dpr = await JS.InvokeAsync<double>("CanvasHelpers.getDevicePixelRatio");
-        var canvasWidth = (int)(rect.Width * dpr);
-        var canvasHeight = (int)(rect.Height * dpr);
-        await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
-
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
         shader = new WebGLShader(app.Program);
         customMaterial = new Velvet.Core.Rendering.Materials.Material(shader);
