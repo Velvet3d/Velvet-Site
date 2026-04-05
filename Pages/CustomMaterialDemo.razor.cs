@@ -1,12 +1,12 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Velvet.Blazor;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Engine;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Materials;
 using Velvet.WebGL;
 using Velvet.WebGL.Shaders;
@@ -27,11 +27,6 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
     
     private Scene? scene;
     private Camera? camera;
-    private OrbitController? orbitController;
-
-    private bool isMouseDown;
-    private int lastMouseX;
-    private int lastMouseY;
     private float elapsedTime;
 
     // UI properties for material
@@ -81,13 +76,14 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         app.Camera = camera;
 
         // Setup orbit controller
-        orbitController = new OrbitController(
+        var orbitController = new OrbitController(
             target: Vector3.Zero,
             yaw: 0.3f,
             pitch: 0.15f,
             distance: 5f,
             minDistance: 2f,
             maxDistance: 15f);
+        app.SetController(orbitController);
 
         elapsedTime = 0;
         
@@ -96,10 +92,9 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         await app.StartAsync(
         onFrame: async (deltaTime) =>
         {
-            if (camera == null || orbitController == null || scene == null || customMaterial == null) return;
+            if (scene == null || customMaterial == null || app == null) return;
 
             elapsedTime += deltaTime * timeScale;
-            orbitController.UpdateCamera(camera);
             customMaterial.Set("uBaseColor", new Vector3(colorR, colorG, colorB));
             customMaterial.Set("uAmbientStrength", 0.15f + (metallic * 0.55f));
             app.Render(scene);
@@ -114,47 +109,6 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
             }
             return Task.CompletedTask;
         });
-    }
-
-    private void OnCanvasMouseDown(MouseEventArgs e)
-    {
-        isMouseDown = true;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseMove(MouseEventArgs e)
-    {
-        if (!isMouseDown || orbitController == null) return;
-
-        int dx = (int)e.ClientX - lastMouseX;
-        int dy = (int)e.ClientY - lastMouseY;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-
-        var yawDelta = -dx * 0.005f;
-        var pitchDelta = dy * 0.005f;
-
-        orbitController.ApplyYaw(yawDelta);
-        orbitController.ApplyPitch(pitchDelta);
-    }
-
-    private void OnCanvasMouseUp(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasMouseLeave(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasWheel(WheelEventArgs e)
-    {
-        if (orbitController == null) return;
-
-        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
-        orbitController.ApplyZoomMultiplier(zoomMultiplier);
     }
 
     public async ValueTask DisposeAsync()

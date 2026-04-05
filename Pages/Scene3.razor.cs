@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Velvet.Blazor;
 using Velvet.Core.Engine;
 using Velvet.Core.Geometry;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.WebGL;
 using BlazorApp = Velvet.Blazor.VelvetApp;
@@ -21,14 +21,9 @@ public partial class Scene3 : ComponentBase, IAsyncDisposable
     private BlazorApp? app;
     private Scene? scene;
     private Camera? camera;
-    private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
     private SpotLight? spot;
-
-    private bool isMouseDown;
-    private int lastMouseX;
-    private int lastMouseY;
 
     // Debug UI properties
     private bool directionalEnabled = true;
@@ -124,64 +119,21 @@ public partial class Scene3 : ComponentBase, IAsyncDisposable
         app.SetDirectionalEnabled(directionalEnabled);
         app.SetPointEnabled(pointEnabled);
 
-        orbitController = new OrbitController(
+        var orbitController = new OrbitController(
             target: Vector3.Zero,
             yaw: 0f,
             pitch: 0.3f,
             distance: 5f,
             minDistance: 2f,
             maxDistance: 15f);
+        app.SetController(orbitController);
 
         await app.StartAsync(OnFrameAsync);
     }
 
-    private void OnCanvasMouseDown(MouseEventArgs e)
-    {
-        isMouseDown = true;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseMove(MouseEventArgs e)
-    {
-        if (!isMouseDown || orbitController is null) return;
-
-        var deltaX = (int)e.ClientX - lastMouseX;
-        var deltaY = (int)e.ClientY - lastMouseY;
-
-        var yawDelta = -deltaX * 0.005f;
-        var pitchDelta = deltaY * 0.005f;
-
-        orbitController.ApplyYaw(yawDelta);
-        orbitController.ApplyPitch(pitchDelta);
-
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseUp(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasMouseLeave(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasWheel(WheelEventArgs e)
-    {
-        if (orbitController is null) return;
-
-        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
-        orbitController.ApplyZoomMultiplier(zoomMultiplier);
-    }
-
     private async Task OnFrameAsync(float dt)
     {
-        if (app is null || camera is null || orbitController is null || scene is null) return;
-
-        orbitController.UpdateCamera(camera);
+        if (app is null || scene is null) return;
 
         // Update lights based on debug UI
         if (directional is not null)

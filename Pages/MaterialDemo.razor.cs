@@ -1,12 +1,12 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Velvet.Blazor;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Engine;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Core.Rendering.Materials;
 using Velvet.WebGL;
@@ -26,7 +26,6 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     private BlazorApp? app;
     private Scene? scene;
     private Camera? camera;
-    private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
 
@@ -36,10 +35,6 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     private NewMaterial? brightMaterial;
     private WebGLShader? shader;
     private Dictionary<Mesh, NewMaterial> meshMaterialMap = new();
-
-    private bool isMouseDown;
-    private int lastMouseX;
-    private int lastMouseY;
 
     // Debug UI properties
     private bool directionalEnabled = true;
@@ -150,13 +145,14 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
         app.SetDirectionalEnabled(directionalEnabled);
         app.SetPointEnabled(pointEnabled);
 
-        orbitController = new OrbitController(
+        var orbitController = new OrbitController(
             target: Vector3.Zero,
             yaw: 0.3f,
             pitch: 0.15f,
             distance: 7f,
             minDistance: 3f,
             maxDistance: 20f);
+        app.SetController(orbitController);
 
         await app.StartAsync(
             onFrame: OnFrameAsync,
@@ -184,47 +180,6 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
         return meshes;
     }
 
-    private void OnCanvasMouseDown(MouseEventArgs e)
-    {
-        isMouseDown = true;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseMove(MouseEventArgs e)
-    {
-        if (!isMouseDown || orbitController == null) return;
-
-        int dx = (int)e.ClientX - lastMouseX;
-        int dy = (int)e.ClientY - lastMouseY;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-
-        var yawDelta = -dx * 0.005f;
-        var pitchDelta = dy * 0.005f;
-
-        orbitController.ApplyYaw(yawDelta);
-        orbitController.ApplyPitch(pitchDelta);
-    }
-
-    private void OnCanvasMouseUp(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasMouseLeave(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasWheel(WheelEventArgs e)
-    {
-        if (orbitController == null) return;
-
-        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
-        orbitController.ApplyZoomMultiplier(zoomMultiplier);
-    }
-
     private async Task BeforeDrawMesh(Mesh mesh)
     {
         if (shader == null) return;
@@ -245,10 +200,7 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
     private async Task OnFrameAsync(float deltaTime)
     {
-        if (camera == null || orbitController == null || scene == null || app == null) return;
-
-        // Update camera from orbit controller
-        orbitController.UpdateCamera(camera);
+        if (scene == null || app == null) return;
 
         // Update light properties from UI
         if (directional != null)
