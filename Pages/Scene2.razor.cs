@@ -83,6 +83,10 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
 
         app.Add(scene);
 
+        // Add skybox
+        var skybox = Skybox.CreateDefault();
+        await app.SetSkybox(skybox);
+
         var bounds = scene.ComputeBounds();
         camera.Frame(bounds, frameMultiplier: 1.3f);
 
