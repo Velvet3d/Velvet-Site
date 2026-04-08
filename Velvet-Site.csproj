@@ -9,8 +9,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Velvet.Core\Velvet.Core.csproj" />
-    <ProjectReference Include="..\src\Velvet.WebGL\Velvet.WebGL.csproj" />
-    <ProjectReference Include="..\src\Velvet.Blazor\Velvet.Blazor.csproj" />
+    <ProjectReference Include="..\src\Velvet.Graphics.WebGL\Velvet.Graphics.WebGL.csproj" />
+    <ProjectReference Include="..\src\Velvet.Hosting.Web\Velvet.Hosting.Web.csproj" />
   </ItemGroup>
 
   <ItemGroup>

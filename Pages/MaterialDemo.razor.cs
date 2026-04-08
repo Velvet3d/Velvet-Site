@@ -1,7 +1,7 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using Velvet.Blazor;
+using Velvet.Hosting.Web;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Engine;
 using Velvet.Core.Math;
@@ -9,9 +9,9 @@ using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Core.Rendering.Materials;
-using Velvet.WebGL;
-using Velvet.WebGL.Shaders;
-using BlazorApp = Velvet.Blazor.VelvetApp;
+using Velvet.Graphics.WebGL;
+using Velvet.Graphics.WebGL.Shaders;
+using BlazorApp = Velvet.Hosting.Web.VelvetApp;
 using NewMaterial = Velvet.Core.Rendering.Materials.Material;
 
 namespace Velvet_Site.Pages;

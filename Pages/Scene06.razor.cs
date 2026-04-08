@@ -1,14 +1,14 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using Velvet.Blazor;
+using Velvet.Hosting.Web;
 using Velvet.Core.Math;
 using Velvet.Core.Particles;
 using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
-using Velvet.WebGL;
-using BlazorApp = Velvet.Blazor.VelvetApp;
+using Velvet.Graphics.WebGL;
+using BlazorApp = Velvet.Hosting.Web.VelvetApp;
 
 namespace Velvet_Site.Pages;
 
