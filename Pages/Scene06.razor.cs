@@ -5,10 +5,11 @@ using Velvet.Hosting.Web;
 using Velvet.Core.Math;
 using Velvet.Core.Particles;
 using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Cameras;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Graphics.WebGL;
-using BlazorApp = Velvet.Hosting.Web.VelvetApp;
+using BlazorApp = Velvet.Hosting.Web.VelvetHost;
 
 namespace Velvet_Site.Pages;
 
@@ -145,7 +146,7 @@ public partial class Scene06 : ComponentBase, IAsyncDisposable
     private async Task OnFrameAsync(float dt)
     {
         if (app is null) return;
-        // Particles are automatically updated and rendered by VelvetApp
+        // Particles are automatically updated and rendered by VelvetHost
         await Task.CompletedTask;
     }
 

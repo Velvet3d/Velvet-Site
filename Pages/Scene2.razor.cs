@@ -6,11 +6,12 @@ using Velvet.Core.Animation;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Cameras;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Graphics.WebGL;
-using BlazorApp = Velvet.Hosting.Web.VelvetApp;
-using EngineScene = Velvet.Core.Engine.Scene;
+using BlazorApp = Velvet.Hosting.Web.VelvetHost;
+using EngineScene = Velvet.Core.Scene.Scene;
 
 namespace Velvet_Site.Pages;
 
