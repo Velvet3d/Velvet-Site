@@ -6,6 +6,7 @@ using Velvet.Core.Math;
 using Velvet.Core.Particles;
 using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Cameras;
+using Velvet.Core.Rendering.Cameras.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Graphics.WebGL;

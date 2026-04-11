@@ -7,6 +7,7 @@ using Velvet.Core.Scene;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Cameras;
+using Velvet.Core.Rendering.Cameras.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Core.Rendering.Materials;
