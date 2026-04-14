@@ -5,9 +5,8 @@ using Velvet.Hosting.Web;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Scene;
 using Velvet.Core.Math;
-using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Cameras;
-using Velvet.Core.Rendering.Cameras.Controllers;
+using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Materials;
 using Velvet.Graphics.WebGL;
@@ -24,7 +23,7 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
     private ElementReference canvasRef;
 
     private BlazorApp? app;
-    private Velvet.Core.Rendering.Materials.Material? customMaterial;
+    private ShaderMaterial? customMaterial;
     private WebGLShader? shader;
     
     private Scene? scene;
@@ -44,7 +43,7 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
         shader = new WebGLShader(app.Program);
-        customMaterial = new Velvet.Core.Rendering.Materials.Material(shader);
+        customMaterial = new ShaderMaterial(shader);
         customMaterial.Set("uBaseColor", new Vector3(colorR, colorG, colorB));
         customMaterial.Set("uAmbientStrength", 0.25f);
 

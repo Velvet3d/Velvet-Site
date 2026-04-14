@@ -5,9 +5,8 @@ using Velvet.Hosting.Web;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Scene;
 using Velvet.Core.Math;
-using Velvet.Core.Rendering;
 using Velvet.Core.Rendering.Cameras;
-using Velvet.Core.Rendering.Cameras.Controllers;
+using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Core.Rendering.Materials;
@@ -15,7 +14,6 @@ using Velvet.Core.Rendering.Meshes;
 using Velvet.Graphics.WebGL;
 using Velvet.Graphics.WebGL.Shaders;
 using BlazorApp = Velvet.Hosting.Web.VelvetHost;
-using NewMaterial = Velvet.Core.Rendering.Materials.Material;
 
 namespace Velvet_Site.Pages;
 
@@ -33,11 +31,11 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     private PointLight? point;
 
     // New Material system fields
-    private NewMaterial? matteMaterial;
-    private NewMaterial? standardMaterial;
-    private NewMaterial? brightMaterial;
+    private ShaderMaterial? matteMaterial;
+    private ShaderMaterial? standardMaterial;
+    private ShaderMaterial? brightMaterial;
     private WebGLShader? shader;
-    private Dictionary<Mesh, NewMaterial> meshMaterialMap = new();
+    private Dictionary<Mesh, ShaderMaterial> meshMaterialMap = new();
 
     // Debug UI properties
     private bool directionalEnabled = true;
@@ -94,17 +92,17 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
         // Create three new material variations using shader-driven system
         // Material 1: Matte Red (low ambient)
-        matteMaterial = new NewMaterial(shader);
+        matteMaterial = new ShaderMaterial(shader);
         matteMaterial.Set("uBaseColor", new Vector3(1.0f, 0.42f, 0.42f));
         matteMaterial.Set("uAmbientStrength", 0.03f);
 
         // Material 2: Standard Cyan (balanced lighting)
-        standardMaterial = new NewMaterial(shader);
+        standardMaterial = new ShaderMaterial(shader);
         standardMaterial.Set("uBaseColor", new Vector3(0.31f, 0.80f, 0.77f));
         standardMaterial.Set("uAmbientStrength", 0.08f);
 
         // Material 3: Bright Yellow (high ambient)
-        brightMaterial = new NewMaterial(shader);
+        brightMaterial = new ShaderMaterial(shader);
         brightMaterial.Set("uBaseColor", new Vector3(1.0f, 0.90f, 0.43f));
         brightMaterial.Set("uAmbientStrength", 0.15f);
 
