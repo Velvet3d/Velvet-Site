@@ -84,15 +84,13 @@ public partial class Scene06 : ComponentBase, IAsyncDisposable
             VelocityMax = new Vector3(0.15f, 0.3f, 0.15f) // Additional upward + horizontal
         };
 
-        smokeSystem = new ParticleSystem(120, smokeEmitter)
-        {
-            ParticleLifetime = 2.5f,
-            StartSize = 12f,
-            EndSize = 4f,
-            StartColor = new Vector4(0.9f, 0.9f, 0.9f, 0.7f), // Soft white/gray
-            EndColor = new Vector4(0.9f, 0.9f, 0.9f, 0.0f),   // Fade to transparent
-            BlendMode = ParticleBlendMode.Alpha
-        };
+        smokeSystem = new ParticleSystem(120, smokeEmitter);
+        smokeSystem.Settings.Lifetime = 2.5f;
+        smokeSystem.Settings.StartSize = 12f;
+        smokeSystem.Settings.EndSize = 4f;
+        smokeSystem.Settings.StartColor = new Vector4(0.9f, 0.9f, 0.9f, 0.7f); // Soft white/gray
+        smokeSystem.Settings.EndColor = new Vector4(0.9f, 0.9f, 0.9f, 0.0f);   // Fade to transparent
+        smokeSystem.Settings.BlendMode = ParticleBlendMode.Alpha;
 
         // Create secondary sparkle particle system
         var sparkleEmitter = new ParticleEmitter
@@ -106,15 +104,13 @@ public partial class Scene06 : ComponentBase, IAsyncDisposable
             VelocityMax = new Vector3(0.25f, 0.5f, 0.25f)
         };
 
-        sparkleSystem = new ParticleSystem(35, sparkleEmitter)
-        {
-            ParticleLifetime = 2.0f,
-            StartSize = 5f,
-            EndSize = 1f,
-            StartColor = new Vector4(1.0f, 1.0f, 1.0f, 0.9f), // Brighter white
-            EndColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f),   // Fade to transparent
-            BlendMode = ParticleBlendMode.Additive // Subtle glow effect
-        };
+        sparkleSystem = new ParticleSystem(35, sparkleEmitter);
+        sparkleSystem.Settings.Lifetime = 2.0f;
+        sparkleSystem.Settings.StartSize = 5f;
+        sparkleSystem.Settings.EndSize = 1f;
+        sparkleSystem.Settings.StartColor = new Vector4(1.0f, 1.0f, 1.0f, 0.9f); // Brighter white
+        sparkleSystem.Settings.EndColor = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);   // Fade to transparent
+        sparkleSystem.Settings.BlendMode = ParticleBlendMode.Additive; // Subtle glow effect
 
         // Add particle systems to app
         app.Add(smokeSystem);
