@@ -12,7 +12,6 @@ using Velvet.Core.Rendering.Lighting;
 using Velvet.Core.Rendering.Materials;
 using Velvet.Core.Rendering.Meshes;
 using Velvet.Graphics.WebGL;
-using Velvet.Graphics.WebGL.Shaders;
 using BlazorApp = Velvet.Hosting.Web.VelvetHost;
 
 namespace Velvet_Site.Pages;
@@ -34,7 +33,6 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     private ShaderMaterial? matteMaterial;
     private ShaderMaterial? standardMaterial;
     private ShaderMaterial? brightMaterial;
-    private WebGLShader? shader;
     private Dictionary<Mesh, ShaderMaterial> meshMaterialMap = new();
 
     // Debug UI properties
@@ -51,9 +49,6 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
         if (!firstRender) return;
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
-
-        // Create shader adapter for material uniforms
-        shader = new WebGLShader(app.Program);
 
         camera = new Camera(
             position: new Vector3(0, 2f, 7f),
@@ -92,17 +87,17 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
         // Create three new material variations using shader-driven system
         // Material 1: Matte Red (low ambient)
-        matteMaterial = new ShaderMaterial(shader);
+        matteMaterial = new ShaderMaterial();
         matteMaterial.Set("uBaseColor", new Vector3(1.0f, 0.42f, 0.42f));
         matteMaterial.Set("uAmbientStrength", 0.03f);
 
         // Material 2: Standard Cyan (balanced lighting)
-        standardMaterial = new ShaderMaterial(shader);
+        standardMaterial = new ShaderMaterial();
         standardMaterial.Set("uBaseColor", new Vector3(0.31f, 0.80f, 0.77f));
         standardMaterial.Set("uAmbientStrength", 0.08f);
 
         // Material 3: Bright Yellow (high ambient)
-        brightMaterial = new ShaderMaterial(shader);
+        brightMaterial = new ShaderMaterial();
         brightMaterial.Set("uBaseColor", new Vector3(1.0f, 0.90f, 0.43f));
         brightMaterial.Set("uAmbientStrength", 0.15f);
 
@@ -183,19 +178,12 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
     private async Task BeforeDrawMesh(Mesh mesh)
     {
-        if (shader == null) return;
+        if (app is null) return;
 
         // Look up the material for this specific mesh
         if (meshMaterialMap.TryGetValue(mesh, out var material))
         {
-            // Apply the material's uniforms
-            material.Apply();
-            
-            // Flush pending uniform writes
-            if (shader is WebGLShader webglShader)
-            {
-                await webglShader.FlushAsync();
-            }
+            await material.ApplyAsync(app.Program).ConfigureAwait(false);
         }
     }
 

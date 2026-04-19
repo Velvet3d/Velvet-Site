@@ -10,7 +10,6 @@ using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Materials;
 using Velvet.Graphics.WebGL;
-using Velvet.Graphics.WebGL.Shaders;
 using BlazorApp = Velvet.Hosting.Web.VelvetHost;
 
 namespace Velvet_Site.Pages;
@@ -24,7 +23,6 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
 
     private BlazorApp? app;
     private ShaderMaterial? customMaterial;
-    private WebGLShader? shader;
     
     private Scene? scene;
     private Camera? camera;
@@ -42,8 +40,7 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         if (!firstRender) return;
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
-        shader = new WebGLShader(app.Program);
-        customMaterial = new ShaderMaterial(shader);
+        customMaterial = new ShaderMaterial();
         customMaterial.Set("uBaseColor", new Vector3(colorR, colorG, colorB));
         customMaterial.Set("uAmbientStrength", 0.25f);
 
@@ -103,10 +100,9 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
         },
         beforeDrawMesh: mesh =>
         {
-            customMaterial.Apply();
-            if (shader is not null)
+            if (customMaterial is not null && app is not null)
             {
-                return shader.FlushAsync();
+                return customMaterial.ApplyAsync(app.Program);
             }
             return Task.CompletedTask;
         });
