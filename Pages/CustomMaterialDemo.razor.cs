@@ -10,7 +10,7 @@ using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Materials;
 using Velvet.Graphics.WebGL;
-using BlazorApp = Velvet.Hosting.Web.VelvetHost;
+using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 
 namespace Velvet_Site.Pages;
 

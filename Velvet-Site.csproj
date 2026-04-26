@@ -6,12 +6,17 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <EnableRazorRuntime>false</EnableRazorRuntime>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\src\Velvet.Core\Velvet.Core.csproj" />
     <ProjectReference Include="..\src\Velvet.Graphics.WebGL\Velvet.Graphics.WebGL.csproj" />
-    <ProjectReference Include="..\src\Velvet.Hosting.Web\Velvet.Hosting.Web.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\src\Velvet.Hosting.Web\Core\VelvetHostCore.cs" Link="Hosting\Core\VelvetHostCore.cs" />
+    <Compile Include="..\src\Velvet.Hosting.Web\BlazorVelvetHost.cs" Link="Hosting\BlazorVelvetHost.cs" />
   </ItemGroup>
 
   <ItemGroup>

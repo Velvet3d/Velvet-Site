@@ -59,6 +59,15 @@ window.CanvasHelpers = {
         return bindingId;
     },
 
+    bindResizeTrackingById: function (canvasId, dotNetRef, methodName) {
+        const canvas = document.getElementById(canvasId);
+        if (!(canvas instanceof HTMLCanvasElement)) {
+            throw new Error("CanvasHelpers.bindResizeTrackingById: canvas not found or not a canvas: " + canvasId);
+        }
+
+        return this.bindResizeTracking(canvas, dotNetRef, methodName);
+    },
+
     unbindResizeTracking: function (bindingId) {
         const onWindowResize = canvasResizeBindings.get(bindingId);
         if (!onWindowResize) {
