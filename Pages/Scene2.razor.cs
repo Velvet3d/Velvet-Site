@@ -9,7 +9,7 @@ using Velvet.Core.Rendering.Cameras;
 using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
-using Velvet.Graphics.WebGL;
+using Velvet.Graphics.WebGL; 
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 using EngineScene = Velvet.Core.Scene.Scene;
 

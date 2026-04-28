@@ -1,0 +1,77 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+<div class="code-viewer @(isExpanded ? "expanded" : "collapsed")">
+    <button type="button" class="code-toggle" @onclick="ToggleExpanded" aria-expanded="@isExpanded">
+        <span class="toggle-label">Show Code</span>
+        <span class="toggle-icon" aria-hidden="true">@(isExpanded ? "−" : "+")</span>
+    </button>
+
+    @if (isExpanded)
+    {
+        <div class="code-shell">
+            <div class="code-toolbar" role="tablist" aria-label="Code tabs">
+                <button type="button"
+                        class="tab-button @(activeTab == CodeTab.Blazor ? "active" : null)"
+                        role="tab"
+                        aria-selected="@(activeTab == CodeTab.Blazor)"
+                        @onclick="() => SetTab(CodeTab.Blazor)">
+                    Blazor
+                </button>
+                <button type="button"
+                        class="tab-button @(activeTab == CodeTab.Razor ? "active" : null)"
+                        role="tab"
+                        aria-selected="@(activeTab == CodeTab.Razor)"
+                        @onclick="() => SetTab(CodeTab.Razor)">
+                    Razor (SSR)
+                </button>
+
+                <button type="button" class="copy-button" @onclick="CopyCurrentTabAsync">
+                    @copyLabel
+                </button>
+            </div>
+
+            <pre class="code-block"><code>@CurrentCode</code></pre>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string BlazorCode { get; set; } = string.Empty;
+    [Parameter] public string RazorCode { get; set; } = string.Empty;
+
+    private enum CodeTab
+    {
+        Blazor,
+        Razor
+    }
+
+    private bool isExpanded;
+    private string copyLabel = "Copy";
+    private CodeTab activeTab = CodeTab.Blazor;
+
+    private string CurrentCode => activeTab == CodeTab.Blazor ? BlazorCode : RazorCode;
+
+    private void ToggleExpanded()
+    {
+        isExpanded = !isExpanded;
+        copyLabel = "Copy";
+    }
+
+    private void SetTab(CodeTab tab)
+    {
+        activeTab = tab;
+        copyLabel = "Copy";
+    }
+
+    private async Task CopyCurrentTabAsync()
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", CurrentCode);
+        copyLabel = "Copied";
+
+        await Task.Delay(1200);
+        copyLabel = "Copy";
+
+        await InvokeAsync(StateHasChanged);
+    }
+}

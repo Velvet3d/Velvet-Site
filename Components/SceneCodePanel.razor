@@ -1,0 +1,76 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+
+<div class="scene-code-panel @(isOpen ? "open" : string.Empty)">
+    <button type="button" class="scene-code-toggle" @onclick="TogglePanel">
+        @(isOpen ? "Hide Code" : "Show Code")
+    </button>
+
+    <section class="scene-code-sheet" aria-hidden="@(!isOpen)">
+        <div class="scene-code-header" role="tablist" aria-label="Code tabs">
+            <button type="button"
+                    class="scene-code-tab @(activeTab == CodeTab.Blazor ? "active" : string.Empty)"
+                    role="tab"
+                    aria-selected="@(activeTab == CodeTab.Blazor)"
+                    @onclick="() => SetTab(CodeTab.Blazor)">
+                Blazor
+            </button>
+            <button type="button"
+                    class="scene-code-tab @(activeTab == CodeTab.Razor ? "active" : string.Empty)"
+                    role="tab"
+                    aria-selected="@(activeTab == CodeTab.Razor)"
+                    @onclick="() => SetTab(CodeTab.Razor)">
+                Razor (SSR)
+            </button>
+            <button type="button" class="scene-code-copy" @onclick="CopyAsync">@copyText</button>
+        </div>
+
+        <pre class="scene-code-block"><code>@CurrentCode</code></pre>
+    </section>
+</div>
+
+@code {
+    [Parameter] public string BlazorCode { get; set; } = string.Empty;
+    [Parameter] public string RazorCode { get; set; } = string.Empty;
+
+    private enum CodeTab
+    {
+        Blazor,
+        Razor
+    }
+
+    private bool isOpen;
+    private CodeTab activeTab = CodeTab.Blazor;
+    private string copyText = "Copy";
+
+    private string CurrentCode => activeTab == CodeTab.Blazor ? BlazorCode : RazorCode;
+
+    private void TogglePanel()
+    {
+        isOpen = !isOpen;
+        copyText = "Copy";
+    }
+
+    private void SetTab(CodeTab tab)
+    {
+        activeTab = tab;
+        copyText = "Copy";
+    }
+
+    private async Task CopyAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", CurrentCode);
+            copyText = "Copied";
+        }
+        catch
+        {
+            copyText = "Copy failed";
+        }
+
+        await Task.Delay(1200);
+        copyText = "Copy";
+        await InvokeAsync(StateHasChanged);
+    }
+}
