@@ -1,6 +1,17 @@
 @page "/scene2"
 
-<div class="scene2-page">
-    <canvas @ref="canvasRef"
-            class="scene2-canvas"></canvas>
+<div class="scene2-root">
+    <canvas @ref="canvasRef" class="scene2-canvas"></canvas>
+
+    <div class="scene2-header">
+        <div>
+            <h2>Fox Animation</h2>
+            <p>Real-time skinning + orbit camera</p>
+        </div>
+    </div>
+
+    <SceneCodeViewer BlazorCode="@BlazorCode"
+                     RazorCode="@RazorCode"
+                     BlazorHref="/scene2?view=blazor"
+                     RazorHref="/scene2?view=razor" />
 </div>

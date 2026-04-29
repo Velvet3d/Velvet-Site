@@ -1,44 +1,84 @@
 @using Microsoft.JSInterop
 @inject IJSRuntime JS
 
-<div class="code-viewer @(isExpanded ? "expanded" : "collapsed")">
-    <button type="button" class="code-toggle" @onclick="ToggleExpanded" aria-expanded="@isExpanded">
-        <span class="toggle-label">Show Code</span>
-        <span class="toggle-icon" aria-hidden="true">@(isExpanded ? "−" : "+")</span>
+<div class="scene-code-panel @(isOpen ? "open" : string.Empty)">
+    @if (!string.IsNullOrWhiteSpace(HintText))
+    {
+        <div class="scene-code-hint">@HintText</div>
+    }
+
+    <button type="button"
+            class="scene-code-toggle"
+            @onclick="TogglePanel"
+            aria-expanded="@isOpen"
+            aria-label="@(isOpen ? "Hide code" : "Show code")">
+        <span class="scene-code-toggle-icon" aria-hidden="true">@(isOpen ? "×" : "</>")</span>
     </button>
 
-    @if (isExpanded)
+    @if (isOpen)
     {
-        <div class="code-shell">
-            <div class="code-toolbar" role="tablist" aria-label="Code tabs">
-                <button type="button"
-                        class="tab-button @(activeTab == CodeTab.Blazor ? "active" : null)"
-                        role="tab"
-                        aria-selected="@(activeTab == CodeTab.Blazor)"
-                        @onclick="() => SetTab(CodeTab.Blazor)">
-                    Blazor
-                </button>
-                <button type="button"
-                        class="tab-button @(activeTab == CodeTab.Razor ? "active" : null)"
-                        role="tab"
-                        aria-selected="@(activeTab == CodeTab.Razor)"
-                        @onclick="() => SetTab(CodeTab.Razor)">
-                    Razor (SSR)
-                </button>
+        <section class="scene-code-sheet" aria-hidden="false">
+            <div class="scene-code-header" role="tablist" aria-label="Code tabs">
+                <div class="scene-code-tab-group">
+                    <a href="#"
+                       class="scene-code-tab @(activeTab == CodeTab.Blazor ? "active" : string.Empty)"
+                       role="tab"
+                       aria-selected="@(activeTab == CodeTab.Blazor)"
+                       @onclick="() => SetTab(CodeTab.Blazor)"
+                       @onclick:preventDefault="true">
+                        Blazor
+                    </a>
 
-                <button type="button" class="copy-button" @onclick="CopyCurrentTabAsync">
+                    @if (!string.IsNullOrWhiteSpace(BlazorHref))
+                    {
+                        <a class="scene-code-tab-link"
+                           href="@BlazorHref"
+                           target="_blank"
+                           rel="noreferrer"
+                           aria-label="Open Blazor link">
+                            ↗
+                        </a>
+                    }
+                </div>
+
+                <div class="scene-code-tab-group">
+                    <a href="#"
+                       class="scene-code-tab @(activeTab == CodeTab.Razor ? "active" : string.Empty)"
+                       role="tab"
+                       aria-selected="@(activeTab == CodeTab.Razor)"
+                       @onclick="() => SetTab(CodeTab.Razor)"
+                       @onclick:preventDefault="true">
+                        Razor (SSR)
+                    </a>
+
+                    @if (!string.IsNullOrWhiteSpace(RazorHref))
+                    {
+                        <a class="scene-code-tab-link"
+                           href="@RazorHref"
+                           target="_blank"
+                           rel="noreferrer"
+                           aria-label="Open Razor link">
+                            ↗
+                        </a>
+                    }
+                </div>
+
+                <button type="button" class="scene-code-copy" @onclick="CopyCurrentTabAsync">
                     @copyLabel
                 </button>
             </div>
 
-            <pre class="code-block"><code>@CurrentCode</code></pre>
-        </div>
+            <pre class="scene-code-block"><code>@CurrentCode</code></pre>
+        </section>
     }
 </div>
 
 @code {
     [Parameter] public string BlazorCode { get; set; } = string.Empty;
     [Parameter] public string RazorCode { get; set; } = string.Empty;
+    [Parameter] public string? HintText { get; set; }
+    [Parameter] public string? BlazorHref { get; set; }
+    [Parameter] public string? RazorHref { get; set; }
 
     private enum CodeTab
     {
@@ -46,15 +86,15 @@
         Razor
     }
 
-    private bool isExpanded;
+    private bool isOpen;
     private string copyLabel = "Copy";
     private CodeTab activeTab = CodeTab.Blazor;
 
     private string CurrentCode => activeTab == CodeTab.Blazor ? BlazorCode : RazorCode;
 
-    private void ToggleExpanded()
+    private void TogglePanel()
     {
-        isExpanded = !isExpanded;
+        isOpen = !isOpen;
         copyLabel = "Copy";
     }
 
@@ -66,12 +106,18 @@
 
     private async Task CopyCurrentTabAsync()
     {
-        await JS.InvokeVoidAsync("navigator.clipboard.writeText", CurrentCode);
-        copyLabel = "Copied";
+        try
+        {
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", CurrentCode);
+            copyLabel = "Copied";
+        }
+        catch
+        {
+            copyLabel = "Copy failed";
+        }
 
         await Task.Delay(1200);
         copyLabel = "Copy";
-
         await InvokeAsync(StateHasChanged);
     }
 }

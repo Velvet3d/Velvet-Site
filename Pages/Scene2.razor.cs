@@ -7,9 +7,9 @@ using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Math;
 using Velvet.Core.Rendering.Cameras;
 using Velvet.Core.Rendering.Controllers;
-using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
-using Velvet.Graphics.WebGL; 
+using Velvet.Graphics.WebGL;
+
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 using EngineScene = Velvet.Core.Scene.Scene;
 
@@ -17,11 +17,20 @@ namespace Velvet_Site.Pages;
 
 public partial class Scene2 : ComponentBase, IAsyncDisposable
 {
+    // ==============================
+    // Injected services
+    // ==============================
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private HttpClient Http { get; set; } = default!;
 
+    // ==============================
+    // Canvas
+    // ==============================
     private ElementReference canvasRef;
 
+    // ==============================
+    // Engine state
+    // ==============================
     private BlazorApp? app;
     private EngineScene? scene;
     private Camera? camera;
@@ -31,21 +40,65 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
     private Animator? animator;
     private List<AnimationClip>? animationClips;
 
+    // ==============================
+    // Code snippets (curated, not full dump)
+    // ==============================
+    private const string BlazorCode = """
+// Blazor Example
+@page "/scene2"
+
+<canvas @ref="canvasRef"></canvas>
+
+var app = await BlazorVelvetHost.CreateAsync(
+    canvasRef,
+    JS,
+    ShaderProgram.CreateSkinnedAsync);
+
+// Load model
+var (scene, animations) =
+    await GltfLoader.LoadFromUrl(Http, "models/Fox.glb");
+
+var animator = new Animator(scene);
+
+await app.StartAsync(dt =>
+{
+    animator.Update(dt);
+    app.Render(scene);
+});
+""";
+
+    private const string RazorCode = """
+// Razor (SSR) Example
+<canvas id="fox-canvas"></canvas>
+
+<script>
+    window.addEventListener("load", () => {
+        window.Velvet.start("fox-canvas");
+    });
+</script>
+""";
+
+
+    // ==============================
+    // Lifecycle
+    // ==============================
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateSkinnedAsync);
 
+        // Camera
         camera = new Camera(
             position: new Vector3(0, 20f, 2.6f),
             target: new Vector3(0, 0, 0),
             up: Vector3.UnitY,
-            fovYRadians: 60.0f * (System.MathF.PI / 180.0f),
-            aspectRatio: 16.0f / 9.0f,
+            fovYRadians: 60f * (MathF.PI / 180f),
+            aspectRatio: 16f / 9f,
             nearPlane: 0.1f,
-            farPlane: 100.0f);
+            farPlane: 100f);
 
+        // Lights
         directional = new DirectionalLight(
             direction: new Vector3(0.4f, -1.0f, -0.25f),
             color: new Vector3(1, 1, 1),
@@ -59,32 +112,33 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             linear: 0.14f,
             quadratic: 0.07f);
 
-        // Keep spotlight uniforms valid; disable by setting intensity to 0.
         spot = new SpotLight(
             position: new Vector3(0.0f, 2.2f, 2.2f),
             direction: new Vector3(0.0f, -1.0f, -1.0f),
-            color: new Vector3(1.0f, 1.0f, 1.0f),
+            color: new Vector3(1, 1, 1),
             intensity: 0.0f,
-            cutoff: 12.0f * (System.MathF.PI / 180.0f),
-            outerCutoff: 20.0f * (System.MathF.PI / 180.0f),
+            cutoff: 12f * (MathF.PI / 180f),
+            outerCutoff: 20f * (MathF.PI / 180f),
             constant: 1.0f,
             linear: 0.09f,
             quadratic: 0.032f);
 
-        var bytes = await Http.GetByteArrayAsync("models/Fox.glb");
-        var loadResult = await GltfLoader.LoadSceneWithAnimations(bytes, "models");
+        // Load model
+        var loadResult = await GltfLoader.LoadFromUrl(Http, "models/Fox.glb");
+
         scene = loadResult.Scene;
         animationClips = loadResult.Animations;
 
         animator = new Animator(scene);
-        if (animationClips.Count > 0)
+
+        if (animationClips.Count > 1)
         {
             animator.PlayClip(animationClips[1]);
         }
 
         app.Add(scene);
 
-        // Add cubemap skybox
+        // Skybox
         await app.SetCubemapSkybox(
             "skybox/px.png",
             "skybox/nx.png",
@@ -93,16 +147,20 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             "skybox/pz.png",
             "skybox/nz.png");
 
+        // Frame camera
         var bounds = scene.ComputeBounds();
-        camera.Frame(bounds, frameMultiplier: 1.3f);
+        camera.Frame(bounds, 1.3f);
 
+        // Assign
         app.Camera = camera;
         app.DirectionalLight = directional;
         app.PointLight = point;
         app.SpotLight = spot;
+
         app.SetDirectionalEnabled(true);
         app.SetPointEnabled(true);
 
+        // Orbit controller
         var orbitController = new OrbitController(
             target: bounds.Center,
             yaw: 0f,
@@ -110,22 +168,21 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             distance: (bounds.Center - camera.Position).Length,
             minDistance: bounds.Radius * 0.5f,
             maxDistance: bounds.Radius * 10f);
+
         app.SetController(orbitController);
 
         await app.StartAsync(OnFrameAsync);
     }
 
-    private async Task OnFrameAsync(float dt)
+    private Task OnFrameAsync(float dt)
     {
-        if (app is null) return;
+        if (app is null || scene is null || animator is null)
+            return Task.CompletedTask;
 
-        if (scene is not null && animator is not null)
-        {
-            animator.Update(dt);
-            app.Render(scene);
-        }
+        animator.Update(dt);
+        app.Render(scene);
 
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
