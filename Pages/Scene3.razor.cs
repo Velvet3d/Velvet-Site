@@ -30,24 +30,19 @@ public partial class Scene3 : ComponentBase, IAsyncDisposable
     private SceneNode? pointMarkerNode;
     private float[]? pointMarkerTransform;
 
-    private enum LightKind
-    {
-        Directional,
-        Point,
-        Spot
-    }
-
-    private LightKind activeLight = LightKind.Point;
-
+   
     private bool directionalEnabled = true;
-    private float directionalIntensity = 1.15f;
+    private float directionalIntensity = 0.15f;
+    private string directionalColor = "#ffffff";
 
     private bool pointEnabled = true;
     private float pointIntensity = 2.6f;
     private float pointPosY = 1.35f;
+    private string pointColor = "#ffffff";
 
     private bool spotEnabled = true;
-    private float spotIntensity = 8.0f;
+    private float spotIntensity = 2.0f;
+    private string spotColor = "#ffffff";
 
     private const string BlazorCode = """
 var app = await BlazorVelvetHost.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
@@ -76,41 +71,6 @@ await app.StartAsync(dt =>
 </script>
 """;
 
-    private string ActiveLightLabel => activeLight switch
-    {
-        LightKind.Directional => "Directional light selected",
-        LightKind.Point => "Point light selected",
-        LightKind.Spot => "Spot light selected",
-        _ => "Directional light selected"
-    };
-
-    private float ActiveLightIntensity
-    {
-        get => activeLight switch
-        {
-            LightKind.Directional => directionalIntensity,
-            LightKind.Point => pointIntensity,
-            LightKind.Spot => spotIntensity,
-            _ => directionalIntensity
-        };
-        set
-        {
-            switch (activeLight)
-            {
-                case LightKind.Directional:
-                    directionalIntensity = value;
-                    break;
-                case LightKind.Point:
-                    pointIntensity = value;
-                    break;
-                case LightKind.Spot:
-                    spotIntensity = value;
-                    break;
-            }
-            // No engine calls here; handled in OnFrameAsync
-        }
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -131,28 +91,21 @@ await app.StartAsync(dt =>
 
         directional = new DirectionalLight(
             direction: new Vector3(-0.45f, -1.0f, -0.25f),
-            color: new Vector3(1f, 0.98f, 0.95f),
+            color: HexToVector3(directionalColor),
             intensity: directionalIntensity);
 
-        // point = new PointLight(
-        //     position: new Vector3(0f, pointPosY, 2f),
-        //     color: new Vector3(1f, 0.95f, 0.9f),
-        //     intensity: pointIntensity,
-        //     constant: 1.0f,
-        //     linear: 0.05f,
-        //     quadratic: 0.01f);
         point = new PointLight(
-position: new Vector3(0f, 1f, 1f),
-color: new Vector3(1f, 0f, 0f), // RED
-intensity: 50f, // VERY HIGH
-constant: 1f,
-linear: 0.01f,
-quadratic: 0.001f);
+            position: new Vector3(0f, 1f, 1f),
+            color: HexToVector3(pointColor),
+            intensity: pointIntensity,
+            constant: 1f,
+            linear: 0.01f,
+            quadratic: 0.001f);
 
         spot = new SpotLight(
             position: new Vector3(0f, 3f, 2.2f),
             direction: new Vector3(0f, -0.5f, -1f),
-            color: new Vector3(1f, 1f, 1f),
+            color: HexToVector3(spotColor),
             intensity: spotIntensity,
             cutoff: 12.0f * (System.MathF.PI / 180.0f),
             outerCutoff: 22.0f * (System.MathF.PI / 180.0f),
@@ -207,7 +160,7 @@ quadratic: 0.001f);
         app.Camera = camera;
         app.DirectionalLight = directional;
         app.PointLight = point;
-        app.SetSpotLight(spot); // Only use SetSpotLight
+        app.SetSpotLight(spot); 
         app.SetDirectionalEnabled(directionalEnabled);
         app.SetPointEnabled(pointEnabled);
 
@@ -220,17 +173,11 @@ quadratic: 0.001f);
             maxDistance: bounds.Radius * 4.5f);
         app.SetController(orbitController);
 
-        // Initial state applied ONCE before StartAsync
         ApplyLightState();
 
         await app.StartAsync(OnFrameAsync);
     }
 
-    private void SetActiveLight(LightKind kind)
-    {
-        activeLight = kind;
-        // No engine calls here; handled in OnFrameAsync
-    }
 
     private void ApplyLightState()
     {
@@ -238,16 +185,19 @@ quadratic: 0.001f);
         if (directional is not null)
         {
             directional.Intensity = directionalEnabled ? directionalIntensity : 0f;
+            directional.Color = HexToVector3(directionalColor);
         }
         if (point is not null)
         {
             point.Intensity = pointEnabled ? pointIntensity : 0f;
             point.Position = new Vector3(0f, pointPosY, 2f);
+            point.Color = HexToVector3(pointColor);
         }
         if (spot is not null)
         {
             spot.Intensity = spotEnabled ? spotIntensity : 0f;
             spot.Direction = new Vector3(0f, -0.5f, -1f);
+            spot.Color = HexToVector3(spotColor);
         }
     }
 
@@ -261,24 +211,27 @@ quadratic: 0.001f);
         if (directional is not null)
         {
             directional.Intensity = directionalEnabled ? directionalIntensity : 0f;
+            directional.Color = HexToVector3(directionalColor);
         }
 
         if (point is not null)
         {
             point.Intensity = pointEnabled ? pointIntensity : 0f;
             point.Position = new Vector3(0f, pointPosY, 2f);
+            point.Color = HexToVector3(pointColor);
         }
 
         if (spot is not null)
         {
             spot.Intensity = spotEnabled ? spotIntensity : 0f;
             spot.Direction = new Vector3(0f, -0.5f, -1f);
+            spot.Color = HexToVector3(spotColor);
         }
 
         // Enable flags (this is OK per frame)
         app.SetDirectionalEnabled(directionalEnabled);
         app.SetPointEnabled(pointEnabled);
-
+        
         // Update marker
         if (pointMarkerTransform is not null && point is not null)
         {
@@ -290,6 +243,19 @@ quadratic: 0.001f);
         app.Render(scene);
 
         return Task.CompletedTask;
+    }
+
+    private Vector3 HexToVector3(string hexColor)
+    {
+        // Remove # if present
+        string hex = hexColor.StartsWith("#") ? hexColor.Substring(1) : hexColor;
+        
+        // Parse RGB values
+        float r = int.Parse(hex.Substring(0, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+        float g = int.Parse(hex.Substring(2, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+        float b = int.Parse(hex.Substring(4, 2), System.Globalization.NumberStyles.HexNumber) / 255f;
+        
+        return new Vector3(r, g, b);
     }
 
     public async ValueTask DisposeAsync()

@@ -135,6 +135,31 @@
     color: #f8fafc;
 }
 
+.scene3-color-control {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.95rem;
+}
+
+.scene3-color-control span {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(226, 232, 240, 0.65);
+}
+
+.scene3-color-picker {
+    flex: 1;
+    height: 2.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    background: transparent;
+    padding: 0.25rem;
+}
+
 .scene3-light-select:hover {
     color: #76dfff;
 }
