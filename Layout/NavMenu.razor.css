@@ -93,6 +93,13 @@
     justify-content: center;
 }
 
+.example-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
 /* Gradient placeholders */
 .gradient-1 { background: linear-gradient(135deg, #222222 0%, #222222 100%); }
 .gradient-2 { background: linear-gradient(135deg, #222222 0%, #222222 100%); }

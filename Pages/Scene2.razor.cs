@@ -39,6 +39,8 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
     private SpotLight? spot;
     private Animator? animator;
     private List<AnimationClip>? animationClips;
+    private string? activeAnimationClipName;
+    private bool isAnimationDropdownOpen;
 
     // ==============================
     // Code snippets (curated, not full dump)
@@ -131,9 +133,12 @@ await app.StartAsync(dt =>
 
         animator = new Animator(scene);
 
-        if (animationClips.Count > 1)
+        var initialClip = animationClips.FirstOrDefault(clip => clip.Name.Contains("Walk", StringComparison.OrdinalIgnoreCase))
+            ?? animationClips.FirstOrDefault();
+
+        if (initialClip is not null)
         {
-            animator.PlayClip(animationClips[1]);
+            SetActiveClip(initialClip);
         }
 
         app.Add(scene);
@@ -172,6 +177,46 @@ await app.StartAsync(dt =>
         app.SetController(orbitController);
 
         await app.StartAsync(OnFrameAsync);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private bool HasAnimations => animationClips is { Count: > 0 };
+
+    private string ActiveAnimationLabel => animationClips?.FirstOrDefault(clip => IsActiveClip(clip))?.Name ?? "Animations";
+
+    private bool IsActiveClip(AnimationClip clip)
+        => string.Equals(activeAnimationClipName, clip.Name, StringComparison.Ordinal);
+
+    private void ToggleAnimationDropdown()
+    {
+        if (!HasAnimations)
+            return;
+
+        isAnimationDropdownOpen = !isAnimationDropdownOpen;
+    }
+
+    private void SetActiveClip(AnimationClip clip)
+    {
+        if (animator is null)
+            return;
+
+        if (string.Equals(activeAnimationClipName, clip.Name, StringComparison.Ordinal))
+            return;
+
+        if (!string.IsNullOrWhiteSpace(activeAnimationClipName))
+        {
+            animator.StopClip(activeAnimationClipName);
+        }
+
+        animator.PlayClip(clip);
+        activeAnimationClipName = clip.Name;
+    }
+
+    private Task SelectAnimationClipAsync(AnimationClip clip)
+    {
+        SetActiveClip(clip);
+        isAnimationDropdownOpen = false;
+        return Task.CompletedTask;
     }
 
     private Task OnFrameAsync(float dt)

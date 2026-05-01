@@ -3,12 +3,33 @@
 <div class="scene2-root">
     <canvas @ref="canvasRef" class="scene2-canvas"></canvas>
 
-    <div class="scene2-header">
-        <div>
-            <h2>Fox Animation</h2>
-            <p>Real-time skinning + orbit camera</p>
+    @if (HasAnimations)
+    {
+        <div class="scene2-animation-bar" role="toolbar" aria-label="Fox animations">
+            <div class="scene2-animation-dropdown @(isAnimationDropdownOpen ? "open" : string.Empty)">
+                <button type="button"
+                        class="scene2-animation-trigger"
+                        aria-expanded="@isAnimationDropdownOpen"
+                        aria-label="Select animation"
+                        @onclick="ToggleAnimationDropdown">
+                    <span class="scene2-animation-title">Animation</span>
+                    <span class="scene2-animation-value">@ActiveAnimationLabel</span>
+                    <span class="scene2-animation-caret" aria-hidden="true">▾</span>
+                </button>
+
+                <div class="scene2-animation-menu" role="menu" aria-label="Fox animation clips">
+                    @foreach (var clip in animationClips!)
+                    {
+                        <button type="button"
+                                class="scene2-animation-option @(IsActiveClip(clip) ? "active" : string.Empty)"
+                                @onclick="() => SelectAnimationClipAsync(clip)">
+                            @clip.Name
+                        </button>
+                    }
+                </div>
+            </div>
         </div>
-    </div>
+    }
 
     <SceneCodeViewer BlazorCode="@BlazorCode"
                      RazorCode="@RazorCode"
