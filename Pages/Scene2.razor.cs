@@ -125,7 +125,6 @@ await app.StartAsync(dt =>
             linear: 0.09f,
             quadratic: 0.032f);
 
-        // Load model
         var loadResult = await GltfLoader.LoadFromUrl(Http, "models/Fox.glb");
 
         scene = loadResult.Scene;

@@ -9,6 +9,7 @@ using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Graphics.WebGL;
+using Velvet.Core.Rendering.Environment;
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 using EngineScene = Velvet.Core.Scene.Scene;
 
@@ -33,15 +34,16 @@ public partial class Scene05 : ComponentBase, IAsyncDisposable
         if (!firstRender) return;
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
-
-        camera = new Camera(
-            position: new Vector3(0, 0.6f, 2.2f),
-            target: new Vector3(0, 0.2f, 0),
+     
+       camera = new Camera(
+            position: new Vector3(0, 20f, 2.6f),
+            target: new Vector3(0, 0, 0),
             up: Vector3.UnitY,
-            fovYRadians: 60.0f * (System.MathF.PI / 180.0f),
-            aspectRatio: 16.0f / 9.0f,
+            fovYRadians: 60f * (MathF.PI / 180f),
+            aspectRatio: 16f / 9f,
             nearPlane: 0.1f,
-            farPlane: 100.0f);
+            farPlane: 100f);
+
 
         directional = new DirectionalLight(
             direction: new Vector3(0.4f, -1.0f, -0.25f),
@@ -70,11 +72,25 @@ public partial class Scene05 : ComponentBase, IAsyncDisposable
 
         var bytes = await Http.GetByteArrayAsync("models/gltf/suzanne.glb");
         scene = await GltfLoader.LoadScene(bytes);
+    //    var loadResult = await GltfLoader.LoadFromUrl(Http, "models/gltf/suzanne.glb");
+    //    scene = loadResult.Scene;
+
+    //     // // Create a beautiful sunset-themed skybox with warm orange horizon and purple zenith
+    //     // // Other options: SkyboxPresets.BlueSky, SkyboxPresets.Dawn, SkyboxPresets.Twilight, 
+    //     // // SkyboxPresets.Overcast, SkyboxPresets.Vibrant, SkyboxPresets.Forest
+    //     var skybox = Skybox.CreateWithGradient(
+    //         horizonColor: new Vector3(1.0f, 0.7f, 0.3f),  // Warm orange at horizon
+    //         zenithColor: new Vector3(0.4f, 0.2f, 0.8f));   // Purple at zenith
+        
+    //     await app.SetSkybox(skybox);
 
         app.Add(scene);
 
-        var bounds = scene.ComputeBounds();
-        camera.Frame(bounds, frameMultiplier: 1.6f);
+
+
+         var bounds = scene.ComputeBounds();
+        // camera.Frame(bounds, frameMultiplier: 1.6f);
+        camera.Frame(bounds, 1.3f);
 
         app.Camera = camera;
         app.DirectionalLight = directional;
@@ -89,7 +105,7 @@ public partial class Scene05 : ComponentBase, IAsyncDisposable
             pitch: 0.2f,
             distance: (bounds.Center - camera.Position).Length,
             minDistance: bounds.Radius * 0.5f,
-            maxDistance: bounds.Radius * 10f);
+            maxDistance: bounds.Radius * 3f);
         app.SetController(orbitController);
 
         await app.StartAsync(OnFrameAsync);

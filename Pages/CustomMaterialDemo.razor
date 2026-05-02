@@ -26,27 +26,11 @@
                 Metallic: <input type="range" min="0" max="1" step="0.01" @bind="metallic" @bind:event="oninput" />
                 <span>@metallic.ToString("F2")</span>
             </label>
-            <label>
-                Time Scale: <input type="range" min="0" max="3" step="0.1" @bind="timeScale" @bind:event="oninput" />
-                <span>@timeScale.ToString("F1")</span>
-            </label>
-        </div>
-
-        <div class="debug-section">
-            <h4>Material System Features</h4>
-            <ul>
-                <li>✓ IShader interface with Use(), SetFloat(), SetVector3(), SetMatrix4()</li>
-                <li>✓ Material class with Dictionary&lt;string, object&gt; properties</li>
-                <li>✓ Set() method for property storage</li>
-                <li>✓ Apply() method with type checking and uniform setting</li>
-                <li>✓ WebGLShader implementation with shader compilation</li>
-            </ul>
-        </div>
-
-        <div class="debug-section">
-            <h4>Camera Controls</h4>
-            <p>🖱️ Drag to rotate</p>
-            <p>🔍 Scroll to zoom</p>
         </div>
     </div>
+      <SceneCodeViewer BlazorCode="@BlazorCode"
+                     RazorCode="@RazorCode"
+                     BlazorHref="/scene2?view=blazor"
+                     RazorHref="/scene2?view=razor" />
+                     
 </div>

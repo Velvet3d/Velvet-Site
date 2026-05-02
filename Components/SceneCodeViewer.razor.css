@@ -1,9 +1,12 @@
 .scene-code-panel {
     position: absolute;
-    left: 20px;
-    bottom: 20px;
-    z-index: 35;
+    left: 24px;
+    bottom: 24px;
+    z-index: 45;
     pointer-events: auto;
+    box-sizing: border-box;
+    /* ensure consistent sizing across scenes */
+    --scene-code-width: 420px;
 }
 
 .scene-code-hint {
@@ -52,7 +55,8 @@
     position: absolute;
     left: 0;
     bottom: 64px;
-    width: min(420px, calc(100vw - 40px));
+    width: var(--scene-code-width);
+    max-width: calc(100vw - 48px);
     border: 1px solid rgba(255, 255, 255, 0.16);
     border-radius: 12px;
     background: rgba(7, 9, 13, 0.94);
@@ -143,7 +147,8 @@
     font-size: 0.76rem;
     line-height: 1.5;
     font-family: "JetBrains Mono", "Fira Code", monospace;
-    max-height: min(58vh, 520px);
+    /* keep panel vertically consistent and avoid pushing layout */
+    max-height: 48vh;
     overflow: auto;
 }
 
@@ -165,10 +170,11 @@
     .scene-code-panel {
         left: 12px;
         bottom: 12px;
+        --scene-code-width: 320px;
     }
 
     .scene-code-sheet {
-        width: min(350px, calc(100vw - 24px));
+        width: min(var(--scene-code-width), calc(100vw - 24px));
         bottom: 62px;
     }
 }

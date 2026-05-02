@@ -29,7 +29,68 @@ public partial class Scene06 : ComponentBase, IAsyncDisposable
     
     private ParticleSystem? smokeSystem;
     private ParticleSystem? sparkleSystem;
+    
+    private const string BlazorCode = """
+// Create particle systems
+var smokeEmitter = new ParticleEmitter
+{
+    Shape = ParticleEmitterShape.Box,
+    Position = new Vector3(0, 0, 0),
+    BoxExtents = new Vector3(0.5f, 0.1f, 0.5f),
+    SpawnRate = 35f,
+    InitialVelocity = new Vector3(0, 0.7f, 0),
+    VelocityMin = new Vector3(-0.15f, 0.0f, -0.15f),
+    VelocityMax = new Vector3(0.15f, 0.3f, 0.15f)
+};
 
+var smokeSystem = new ParticleSystem(120, smokeEmitter);
+smokeSystem.Settings.Lifetime = 2.5f;
+smokeSystem.Settings.StartSize = 12f;
+smokeSystem.Settings.EndSize = 4f;
+smokeSystem.Settings.StartColor = new Vector4(0.9f, 0.9f, 0.9f, 0.7f);
+smokeSystem.Settings.EndColor = new Vector4(0.9f, 0.9f, 0.9f, 0.0f);
+smokeSystem.Settings.BlendMode = ParticleBlendMode.Alpha;
+
+// Sparkle system
+var sparkleEmitter = new ParticleEmitter
+{
+    Shape = ParticleEmitterShape.Box,
+    Position = new Vector3(0, 0, 0),
+    BoxExtents = new Vector3(0.5f, 0.2f, 0.5f),
+    SpawnRate = 12f,
+    InitialVelocity = new Vector3(0, 1.0f, 0),
+    VelocityMin = new Vector3(-0.25f, 0.0f, -0.25f),
+    VelocityMax = new Vector3(0.25f, 0.5f, 0.25f)
+};
+
+var sparkleSystem = new ParticleSystem(35, sparkleEmitter);
+sparkleSystem.Settings.Lifetime = 2.0f;
+sparkleSystem.Settings.StartSize = 5f;
+sparkleSystem.Settings.EndSize = 1f;
+sparkleSystem.Settings.StartColor = new Vector4(1f, 1f, 1f, 0.9f);
+sparkleSystem.Settings.EndColor = new Vector4(1f, 1f, 1f, 0.0f);
+sparkleSystem.Settings.BlendMode = ParticleBlendMode.Additive;
+
+// Add to engine
+app.Add(smokeSystem);
+app.Add(sparkleSystem);
+
+// Camera
+app.Camera = new Camera(
+    position: new Vector3(0, 1.5f, 3.5f),
+    target: new Vector3(0, 1.0f, 0),
+    up: Vector3.UnitY,
+    fovYRadians: 60f * (MathF.PI / 180f),
+    aspectRatio: 16f / 9f,
+    nearPlane: 0.1f,
+    farPlane: 100f
+);
+
+// Optional skybox
+await app.SetSkybox(Skybox.CreateDefault());
+""";
+
+private const string RazorCode = """from Razor (SSR)""";
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;

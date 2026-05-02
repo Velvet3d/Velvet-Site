@@ -35,6 +35,37 @@ public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
     private float metallic = 0.5f;
     private float timeScale = 1.0f;
 
+  private const string BlazorCode = """
+// Blazor Example
+// Create custom material
+var material = new ShaderMaterial();
+material.Set("uBaseColor", new Vector3(0.6f, 0.3f, 0.9f));
+material.Set("uAmbientStrength", 0.3f);
+
+// Apply per mesh before draw
+beforeDrawMesh: mesh =>
+{
+    return material.ApplyAsync(app.Program);
+};
+
+// Update material dynamically
+material.Set("uBaseColor", new Vector3(colorR, colorG, colorB));
+material.Set("uAmbientStrength", 0.15f + metallic * 0.55f);
+```
+
+""";
+
+    private const string RazorCode = """
+// Razor (SSR) Example
+<canvas id="fox-canvas"></canvas>
+
+<script>
+    window.addEventListener("load", () => {
+        window.Velvet.start("fox-canvas");
+    });
+</script>
+""";
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;

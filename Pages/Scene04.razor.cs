@@ -9,6 +9,7 @@ using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
 using Velvet.Graphics.WebGL;
+using Velvet.Core.Rendering.Environment;
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 using EngineScene = Velvet.Core.Scene.Scene;
 
@@ -20,6 +21,16 @@ public partial class Scene04 : ComponentBase, IAsyncDisposable
     [Inject] private HttpClient Http { get; set; } = default!;
 
     private ElementReference canvasRef;
+
+    private const string BlazorCode = """
+// Load damaged helmet glTF from URL
+var loadResult = await GltfLoader.LoadFromUrl(Http, "models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
+var scene = loadResult.Scene;
+await app.SetSkybox(Skybox.CreateWithGradient(new Vector3(0.08f,0.1f,0.14f), new Vector3(0.02f,0.03f,0.05f)));
+app.Add(scene);
+""";
+
+    private const string RazorCode = "from Razor (SSR)";
 
     private BlazorApp? app;
     private EngineScene? scene;
@@ -68,8 +79,14 @@ public partial class Scene04 : ComponentBase, IAsyncDisposable
             linear: 0.09f,
             quadratic: 0.032f);
 
-        var bytes = await Http.GetByteArrayAsync("models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
-        scene = await GltfLoader.LoadScene(bytes, "models/gltf/DamagedHelmet/glTF-Embedded");
+        var loadResult = await GltfLoader.LoadFromUrl(Http, "models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
+        scene = loadResult.Scene;
+
+        var skybox = Skybox.CreateWithGradient(
+             horizonColor: new Vector3(0.08f, 0.1f, 0.14f),
+    zenithColor: new Vector3(0.02f, 0.03f, 0.05f));
+        
+        await app.SetSkybox(skybox);
 
         app.Add(scene);
 
