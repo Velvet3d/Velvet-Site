@@ -8,7 +8,6 @@
     <EnableRazorRuntime>false</EnableRazorRuntime>
 
     <StaticWebAssetBasePath>.</StaticWebAssetBasePath>
-    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
 
   </PropertyGroup>
 
