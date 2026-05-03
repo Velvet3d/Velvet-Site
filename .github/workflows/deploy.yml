@@ -19,7 +19,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Publish
-        run: dotnet publish Velvet-Site.csproj -c Release -o publish
+        run: dotnet publish Velvet-Site.csproj -c Release -o publish /p:StaticWebAssetBasePath=.
 
       - name: Copy to deploy repo
         run: |

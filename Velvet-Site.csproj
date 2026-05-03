@@ -6,6 +6,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     <EnableRazorRuntime>false</EnableRazorRuntime>
+
+    <StaticWebAssetBasePath>.</StaticWebAssetBasePath>
+    <BlazorWebAssemblyLoadAllGlobalizationData>true</BlazorWebAssemblyLoadAllGlobalizationData>
+
   </PropertyGroup>
 
   <ItemGroup>
