@@ -12,8 +12,12 @@ using Velvet.Graphics.WebGL;
 using Velvet.Core.Rendering.Environment;
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 using EngineScene = Velvet.Core.Scene.Scene;
+namespace Velvet_Site.Pages.Scenes;
 
-namespace Velvet_Site.Pages;
+
+
+
+
 
 public partial class Scene04 : ComponentBase, IAsyncDisposable
 {

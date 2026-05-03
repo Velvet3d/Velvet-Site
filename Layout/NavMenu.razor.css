@@ -148,3 +148,19 @@
 .examples-container::-webkit-scrollbar-thumb:hover {
     background: rgba(138, 43, 226, 0.6);
 }
+
+/* Mobile adjustments */
+@media (max-width: 640px) {
+    .examples-container {
+        height: calc(100vh - 80px);
+        padding-top: 20px;
+    }
+
+    .sidebar-header {
+        position: sticky;
+        top: 0;
+        background: #171717;
+        z-index: 10;
+        padding-top: 30px;
+    }
+}

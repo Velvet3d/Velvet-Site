@@ -16,6 +16,51 @@ main {
     border-right: 1px solid rgba(138, 43, 226, 0.2);
 }
 
+.mobile-toggle {
+    display: none;
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 1001;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    width: 40px;
+    height: 40px;
+}
+
+.hamburger {
+    display: block;
+    position: relative;
+    width: 24px;
+    height: 18px;
+}
+
+.hamburger::before,
+.hamburger::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+}
+
+.hamburger::before {
+    top: 0;
+}
+
+.hamburger::after {
+    bottom: 0;
+}
+
+.hamburger {
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0.8) 15%, transparent 15%, transparent 40%, rgba(255, 255, 255, 0.8) 40%, rgba(255, 255, 255, 0.8) 55%, transparent 55%, transparent 100%);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+
 .top-bar {
     background:#171717;
     border-bottom: 1px solid rgba(138, 43, 226, 0.2);
@@ -68,5 +113,47 @@ main {
         position: sticky;
         top: 0;
         overflow-y: auto;
+    }
+
+    .mobile-toggle {
+        display: none !important;
+    }
+}
+
+/* Mobile Sidebar Collapsible */
+@media (max-width: 640px) {
+    .page {
+        position: relative;
+    }
+
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        width: 80%;
+        height: 100vh;
+        transition: left 0.3s ease;
+        z-index: 1000;
+        overflow-y: auto;
+        box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .page.sidebar-open .sidebar {
+        left: 0;
+    }
+
+    .mobile-toggle {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .page.sidebar-open main {
+        pointer-events: none;
+        opacity: 0.7;
+    }
+
+    .top-bar {
+        padding-left: 52px;
     }
 }

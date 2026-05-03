@@ -11,8 +11,12 @@ using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Materials;
 using Velvet.Graphics.WebGL;
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
+namespace Velvet_Site.Pages.Scenes;
 
-namespace Velvet_Site.Pages;
+
+
+
+
 
 public partial class CustomMaterialDemo : ComponentBase, IAsyncDisposable
 {
@@ -131,7 +135,7 @@ material.Set("uAmbientStrength", 0.15f + metallic * 0.55f);
         },
         beforeDrawMesh: mesh =>
         {
-            if (customMaterial is not null && app is not null)
+            if (customMaterial is not null && app is not null && app.Program is not null)
             {
                 return customMaterial.ApplyAsync(app.Program);
             }

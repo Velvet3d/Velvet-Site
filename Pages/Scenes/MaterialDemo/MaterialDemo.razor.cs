@@ -13,8 +13,12 @@ using Velvet.Core.Rendering.Materials;
 using Velvet.Core.Rendering.Meshes;
 using Velvet.Graphics.WebGL;
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
+namespace Velvet_Site.Pages.Scenes;
 
-namespace Velvet_Site.Pages;
+
+
+
+
 
 public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 {
@@ -178,7 +182,7 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
     private async Task BeforeDrawMesh(Mesh mesh)
     {
-        if (app is null) return;
+        if (app is null || app.Program is null) return;
 
         // Look up the material for this specific mesh
         if (meshMaterialMap.TryGetValue(mesh, out var material))

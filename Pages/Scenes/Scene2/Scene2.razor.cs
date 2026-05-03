@@ -12,8 +12,7 @@ using Velvet.Graphics.WebGL;
 
 using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 using EngineScene = Velvet.Core.Scene.Scene;
-
-namespace Velvet_Site.Pages;
+namespace Velvet_Site.Pages.Scenes;
 
 public partial class Scene2 : ComponentBase, IAsyncDisposable
 {
@@ -181,7 +180,7 @@ await app.StartAsync(dt =>
 
     private bool HasAnimations => animationClips is { Count: > 0 };
 
-    private string ActiveAnimationLabel => animationClips?.FirstOrDefault(clip => IsActiveClip(clip))?.Name ?? "Animations";
+   // private string ActiveAnimationLabel => animationClips?.FirstOrDefault(clip => IsActiveClip(clip))?.Name ?? "Animations";
 
     private bool IsActiveClip(AnimationClip clip)
         => string.Equals(activeAnimationClipName, clip.Name, StringComparison.Ordinal);

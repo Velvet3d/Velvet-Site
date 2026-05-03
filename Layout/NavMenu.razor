@@ -2,7 +2,7 @@
     <h1 class="velvet-logo">Velvet</h1>
 </div>
 
-<div class="examples-container">
+<div class="examples-container" @onclick="NotifyNavigation">
     <div class="example-category">
         
         <NavLink class="example-card" href="" Match="NavLinkMatch.All">
@@ -62,3 +62,13 @@
         </NavLink>
     </div>
 </div>
+
+@code {
+    [Parameter]
+    public EventCallback OnNavigate { get; set; }
+
+    private async Task NotifyNavigation()
+    {
+        await OnNavigate.InvokeAsync();
+    }
+}
