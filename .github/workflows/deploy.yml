@@ -21,9 +21,14 @@ jobs:
       - name: Publish
         run: dotnet publish Velvet-Site.csproj -c Release -o publish /p:StaticWebAssetBasePath=.
 
+      - name: Fix Blazor loader
+        run: |
+          cd publish/wwwroot/_framework
+          FILE=$(ls blazor.webassembly.*.js | head -n 1)
+          cp "$FILE" blazor.webassembly.js
+
       - name: Copy to deploy repo
         run: |
-        
           git clone https://${{ secrets.GH_TOKEN }}@github.com/Velvet3d/velvet3d.github.io.git deploy
           rm -rf deploy/*
           cp -r publish/wwwroot/* deploy/
