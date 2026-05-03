@@ -1,0 +1,37 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Publish
+        run: dotnet publish Velvet-Site/Velvet-Site.csproj -c Release -o publish
+
+      - name: Copy to deploy repo
+        run: |
+        
+          git clone https://${{ secrets.GH_TOKEN }}@github.com/Velvet3d/velvet3d.github.io.git deploy
+          rm -rf deploy/*
+          cp -r publish/wwwroot/* deploy/
+
+          cd deploy
+          touch .nojekyll
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add .
+          git commit -m "deploy"
+          git push
