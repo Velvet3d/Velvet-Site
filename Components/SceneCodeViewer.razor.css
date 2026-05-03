@@ -1,0 +1,180 @@
+.scene-code-panel {
+    position: absolute;
+    left: 24px;
+    bottom: 24px;
+    z-index: 45;
+    pointer-events: auto;
+    box-sizing: border-box;
+    /* ensure consistent sizing across scenes */
+    --scene-code-width: 420px;
+}
+
+.scene-code-hint {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, 0.52);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #f3f4f6;
+    font-size: 12px;
+    backdrop-filter: blur(8px);
+}
+
+.scene-code-toggle {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    border-radius: 50%;
+    background: rgba(17, 17, 26, 0.88);
+    color: #ffffff;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(8px);
+    transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+}
+
+.scene-code-toggle:hover {
+    transform: translateY(-1px);
+    border-color: rgba(196, 181, 253, 0.85);
+    background: rgba(24, 24, 36, 0.94);
+}
+
+.scene-code-toggle-icon {
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -1px;
+}
+
+.scene-code-sheet {
+    position: absolute;
+    left: 0;
+    bottom: 64px;
+    width: var(--scene-code-width);
+    max-width: calc(100vw - 48px);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    background: rgba(7, 9, 13, 0.94);
+    overflow: hidden;
+    box-shadow: 0 20px 38px rgba(0, 0, 0, 0.45);
+}
+
+.scene-code-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.11);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.scene-code-tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: transparent;
+    color: #9ea8bc;
+    font-size: 0.77rem;
+    .scene-code-links {
+        display: flex;
+        gap: 8px;
+        padding: 10px 10px 0;
+        flex-wrap: wrap;
+    }
+
+    .scene-code-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 9px;
+        border-radius: 999px;
+        border: 1px solid rgba(167, 139, 250, 0.32);
+        background: rgba(167, 139, 250, 0.08);
+        color: #e9e1ff;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .scene-code-link:hover {
+        border-color: rgba(196, 181, 253, 0.82);
+        background: rgba(167, 139, 250, 0.18);
+        color: #ffffff;
+    }
+    padding: 6px 8px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.scene-code-tab:hover {
+    color: #dbe8ff;
+}
+
+.scene-code-tab.active {
+    color: #eef7ff;
+    background: rgba(66, 191, 255, 0.2);
+    border-color: rgba(98, 201, 255, 0.5);
+}
+
+.scene-code-copy {
+    margin-left: auto;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #dce7fb;
+    font-size: 0.75rem;
+    padding: 6px 9px;
+    cursor: pointer;
+}
+
+.scene-code-copy:hover {
+    border-color: rgba(88, 205, 255, 0.68);
+    background: rgba(88, 205, 255, 0.16);
+}
+
+.scene-code-block {
+    margin: 0;
+    padding: 12px;
+    color: #c8d5ea;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    font-family: "JetBrains Mono", "Fira Code", monospace;
+    /* keep panel vertically consistent and avoid pushing layout */
+    max-height: 48vh;
+    overflow: auto;
+}
+
+.scene-code-block code {
+    white-space: pre;
+}
+
+.scene-code-block::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.scene-code-block::-webkit-scrollbar-thumb {
+    background: rgba(88, 205, 255, 0.34);
+    border-radius: 999px;
+}
+
+@media (max-width: 860px) {
+    .scene-code-panel {
+        left: 12px;
+        bottom: 12px;
+        --scene-code-width: 320px;
+    }
+
+    .scene-code-sheet {
+        width: min(var(--scene-code-width), calc(100vw - 24px));
+        bottom: 62px;
+    }
+}

@@ -1,15 +1,17 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using Velvet.Blazor;
+using Velvet.Hosting.Web;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Math;
-using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Cameras;
+using Velvet.Core.Rendering.Controllers;
+using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
-using Velvet.WebGL;
-using BlazorApp = Velvet.Blazor.VelvetApp;
-using EngineScene = Velvet.Core.Engine.Scene;
+using Velvet.Graphics.WebGL;
+using Velvet.Core.Rendering.Environment;
+using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
+using EngineScene = Velvet.Core.Scene.Scene;
 
 namespace Velvet_Site.Pages;
 
@@ -20,28 +22,26 @@ public partial class Scene04 : ComponentBase, IAsyncDisposable
 
     private ElementReference canvasRef;
 
+    private const string BlazorCode = """
+// Load damaged helmet glTF from URL
+var loadResult = await GltfLoader.LoadFromUrl(Http, "models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
+var scene = loadResult.Scene;
+await app.SetSkybox(Skybox.CreateWithGradient(new Vector3(0.08f,0.1f,0.14f), new Vector3(0.02f,0.03f,0.05f)));
+app.Add(scene);
+""";
+
+    private const string RazorCode = "from Razor (SSR)";
+
     private BlazorApp? app;
     private EngineScene? scene;
     private Camera? camera;
-    private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
     private SpotLight? spot;
 
-    private bool isMouseDown;
-    private int lastMouseX;
-    private int lastMouseY;
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-
-        // Fix canvas pixelation by setting correct resolution
-        var rect = await JS.InvokeAsync<CanvasRect>("CanvasHelpers.getCanvasRect", canvasRef);
-        var dpr = await JS.InvokeAsync<double>("CanvasHelpers.getDevicePixelRatio");
-        var canvasWidth = (int)(rect.Width * dpr);
-        var canvasHeight = (int)(rect.Height * dpr);
-        await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
 
@@ -79,8 +79,14 @@ public partial class Scene04 : ComponentBase, IAsyncDisposable
             linear: 0.09f,
             quadratic: 0.032f);
 
-        var bytes = await Http.GetByteArrayAsync("models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
-        scene = await GltfLoader.LoadScene(bytes, "models/gltf/DamagedHelmet/glTF-Embedded");
+        var loadResult = await GltfLoader.LoadFromUrl(Http, "models/gltf/DamagedHelmet/glTF-Embedded/DamagedHelmet.gltf");
+        scene = loadResult.Scene;
+
+        var skybox = Skybox.CreateWithGradient(
+             horizonColor: new Vector3(0.08f, 0.1f, 0.14f),
+    zenithColor: new Vector3(0.02f, 0.03f, 0.05f));
+        
+        await app.SetSkybox(skybox);
 
         app.Add(scene);
 
@@ -94,64 +100,21 @@ public partial class Scene04 : ComponentBase, IAsyncDisposable
         app.SetDirectionalEnabled(true);
         app.SetPointEnabled(true);
 
-        orbitController = new OrbitController(
+        var orbitController = new OrbitController(
             target: bounds.Center,
             yaw: 0f,
             pitch: 0.2f,
             distance: (bounds.Center - camera.Position).Length,
             minDistance: bounds.Radius * 0.5f,
             maxDistance: bounds.Radius * 10f);
+        app.SetController(orbitController);
 
         await app.StartAsync(OnFrameAsync);
     }
 
-    private void OnCanvasMouseDown(MouseEventArgs e)
-    {
-        isMouseDown = true;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseMove(MouseEventArgs e)
-    {
-        if (!isMouseDown || orbitController is null) return;
-
-        var deltaX = (int)e.ClientX - lastMouseX;
-        var deltaY = (int)e.ClientY - lastMouseY;
-
-        var yawDelta = -deltaX * 0.005f;
-        var pitchDelta = deltaY * 0.005f;
-
-        orbitController.ApplyYaw(yawDelta);
-        orbitController.ApplyPitch(pitchDelta);
-
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseUp(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasMouseLeave(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasWheel(WheelEventArgs e)
-    {
-        if (orbitController is null) return;
-
-        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
-        orbitController.ApplyZoomMultiplier(zoomMultiplier);
-    }
-
     private async Task OnFrameAsync(float dt)
     {
-        if (app is null || camera is null || orbitController is null || scene is null) return;
-
-        orbitController.UpdateCamera(camera);
+        if (app is null || scene is null) return;
         app.Render(scene);
 
         await Task.CompletedTask;

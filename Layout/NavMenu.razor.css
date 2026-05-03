@@ -36,7 +36,9 @@
     margin-bottom: 20px;
     cursor: pointer;
     text-decoration: none;
-    transition: transform 0.2s ease;
+    border-radius: 8px;
+    padding: 6px;
+    transition: transform 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
 }
 
 .examples-container a,
@@ -69,6 +71,8 @@
 
 .example-card:hover {
     transform: translateY(-2px);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
 }
 
 .example-thumbnail {
@@ -78,6 +82,7 @@
     overflow: hidden;
     border: 1px solid rgba(138, 43, 226, 0.2);
     margin-bottom: 8px;
+    transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
 .placeholder-img {
@@ -86,6 +91,13 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.example-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 /* Gradient placeholders */
@@ -102,6 +114,7 @@
     color: #d1d5db;
     /* line-height: 1.3; */
      text-decoration: none;
+    transition: color 0.22s ease;
 }
 
 .example-card:hover .example-title {
@@ -109,13 +122,13 @@
 }
 
 .example-card.active .example-thumbnail {
-    border-color: #8b5cf6;
-    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+    border-color: #56c8ff;
+    box-shadow: 0 0 0 1px rgba(86, 200, 255, 0.35), 0 8px 20px rgba(33, 92, 143, 0.35);
 }
 
 .example-card.active .example-title {
-    color: #a78bfa;
-    font-weight: 500;
+    color: #c7ecff;
+    font-weight: 600;
 }
 
 /* Scrollbar Styling */

@@ -1,11 +1,38 @@
 @page "/scene2"
 
-<div class="scene2-page">
-    <canvas @ref="canvasRef"
-            class="scene2-canvas"
-            @onmousedown="OnCanvasMouseDown"
-            @onmousemove="OnCanvasMouseMove"
-            @onmouseup="OnCanvasMouseUp"
-            @onwheel="OnCanvasWheel"
-            @onmouseleave="OnCanvasMouseLeave"></canvas>
+<div class="scene2-root">
+    <canvas @ref="canvasRef" class="scene2-canvas"></canvas>
+
+    @if (HasAnimations)
+    {
+        <div class="scene2-animation-bar" role="toolbar" aria-label="Fox animations">
+            <div class="scene2-animation-dropdown @(isAnimationDropdownOpen ? "open" : string.Empty)">
+                <button type="button"
+                        class="scene2-animation-trigger"
+                        aria-expanded="@isAnimationDropdownOpen"
+                        aria-label="Select animation"
+                        @onclick="ToggleAnimationDropdown">
+                    <span class="scene2-animation-title">Animation</span>
+                    <span class="scene2-animation-value">@ActiveAnimationLabel</span>
+                    <span class="scene2-animation-caret" aria-hidden="true">▾</span>
+                </button>
+
+                <div class="scene2-animation-menu" role="menu" aria-label="Fox animation clips">
+                    @foreach (var clip in animationClips!)
+                    {
+                        <button type="button"
+                                class="scene2-animation-option @(IsActiveClip(clip) ? "active" : string.Empty)"
+                                @onclick="() => SelectAnimationClipAsync(clip)">
+                            @clip.Name
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <SceneCodeViewer BlazorCode="@BlazorCode"
+                     RazorCode="@RazorCode"
+                     BlazorHref="/scene2?view=blazor"
+                     RazorHref="/scene2?view=razor" />
 </div>

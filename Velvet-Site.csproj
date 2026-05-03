@@ -5,12 +5,13 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <EnableRazorRuntime>false</EnableRazorRuntime>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\src\Velvet.Core\Velvet.Core.csproj" />
-    <ProjectReference Include="..\src\Velvet.WebGL\Velvet.WebGL.csproj" />
-    <ProjectReference Include="..\src\Velvet.Blazor\Velvet.Blazor.csproj" />
+    <PackageReference Include="Velvet.Core" Version="0.1.0" />
+    <PackageReference Include="Velvet.Graphics.WebGL" Version="0.1.0" />
+    <PackageReference Include="Velvet.Hosting.Web" Version="0.1.1" />
   </ItemGroup>
 
   <ItemGroup>

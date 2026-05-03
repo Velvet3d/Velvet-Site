@@ -1,0 +1,129 @@
+.custom-material-page {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+    overflow: hidden;
+}
+
+.custom-material-canvas {
+    flex: 1;
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+}
+
+.custom-material-canvas:active {
+    cursor: grabbing;
+}
+
+.debug-panel {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: rgba(20, 20, 30, 0.92);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    min-width: 340px;
+    max-width: 400px;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+.debug-title {
+    margin: 0 0 8px 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: #ffffff;
+    border-bottom: 2px solid rgba(120, 81, 255, 0.5);
+    padding-bottom: 10px;
+}
+
+.demo-description {
+    margin: 0 0 16px 0;
+    font-size: 0.9rem;
+    color: #b0b0b0;
+    line-height: 1.4;
+}
+
+.debug-section {
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.debug-section h4 {
+    margin: 0 0 12px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #7851ff;
+}
+
+.debug-section label {
+    display: block;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    color: #d0d0d0;
+}
+
+.debug-section input[type="range"] {
+    width: 160px;
+    margin: 0 10px;
+    accent-color: #7851ff;
+    cursor: pointer;
+}
+
+.debug-section span {
+    font-weight: 600;
+    color: #ffffff;
+    min-width: 40px;
+    display: inline-block;
+}
+
+.debug-section p {
+    margin: 6px 0;
+    font-size: 0.9rem;
+    color: #b0b0b0;
+}
+
+.debug-section ul {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0;
+}
+
+.debug-section ul li {
+    padding: 6px 0;
+    font-size: 0.85rem;
+    color: #c0c0c0;
+    line-height: 1.5;
+}
+
+/* Scrollbar styling */
+.debug-panel::-webkit-scrollbar {
+    width: 8px;
+}
+
+.debug-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.debug-panel::-webkit-scrollbar-thumb {
+    background: rgba(120, 81, 255, 0.4);
+    border-radius: 4px;
+}
+
+.debug-panel::-webkit-scrollbar-thumb:hover {
+    background: rgba(120, 81, 255, 0.6);
+}

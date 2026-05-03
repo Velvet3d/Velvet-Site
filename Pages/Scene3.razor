@@ -1,64 +1,38 @@
 @page "/scene3"
 
+<PageTitle>Lighting Showcase - Velvet</PageTitle>
+
 <div class="scene3-page">
-    <canvas @ref="canvasRef"
-            class="scene3-canvas"
-            @onmousedown="OnCanvasMouseDown"
-            @onmousemove="OnCanvasMouseMove"
-            @onmouseup="OnCanvasMouseUp"
-            @onwheel="OnCanvasWheel"
-            @onmouseleave="OnCanvasMouseLeave"></canvas>
+    <canvas @ref="canvasRef" class="scene3-canvas"></canvas>
 
-    <div class="debug-panel">
-        <h3 class="debug-title">Scene 3: Cube & Sphere Demo</h3>
-        
-        <div class="debug-section">
-            <h4>Directional Light</h4>
-            <label>
-                <input type="checkbox" @bind="directionalEnabled" @bind:event="oninput" /> Enabled
-            </label>
-            <label>
-                Intensity: <input type="range" min="0" max="3" step="0.1" @bind="directionalIntensity" @bind:event="oninput" />
-                <span>@directionalIntensity.ToString("F1")</span>
-            </label>
-            <label>
-                Color:
-                <input type="color" @bind="directionalColor" @bind:event="oninput" />
-            </label>
-        </div>
+    <div class="scene3-panel">
 
-        <div class="debug-section">
-            <h4>Point Light</h4>
-            <label>
-                <input type="checkbox" @bind="pointEnabled" @bind:event="oninput" /> Enabled
-            </label>
-            <label>
-                Intensity: <input type="range" min="0" max="5" step="0.1" @bind="pointIntensity" @bind:event="oninput" />
-                <span>@pointIntensity.ToString("F1")</span>
-            </label>
-            <label>
-                Color:
-                <input type="color" @bind="pointColor" @bind:event="oninput" />
-            </label>
-            <label>
-                Position Y: <input type="range" min="-3" max="3" step="0.1" @bind="pointPosY" @bind:event="oninput" />
-                <span>@pointPosY.ToString("F1")</span>
-            </label>
-        </div>
+        <h2>Lighting Controls</h2>
 
-        <div class="debug-section">
-            <h4>Spot Light</h4>
-            <label>
-                <input type="checkbox" @bind="spotEnabled" @bind:event="oninput" /> Enabled
-            </label>
-            <label>
-                Intensity: <input type="range" min="0" max="10" step="0.5" @bind="spotIntensity" @bind:event="oninput" />
-                <span>@spotIntensity.ToString("F1")</span>
-            </label>
-            <label>
-                Color:
-                <input type="color" @bind="spotColor" @bind:event="oninput" />
-            </label>
-        </div>
-    </div>
-</div>
+        <div class="light-block">
+            <h4>Directional</h4>
+            <label> <input type="checkbox" @bind="directionalEnabled" /> Enabled</label>
+            <input type="range" min="0" max="5" step="0.1" @bind="directionalIntensity"
+                                         @bind:event="oninput" /> 
+                <input type="color" @bind="directionalColor" />
+            </div>
+
+            <div class="light-block">
+                <h4>Point</h4>
+                <label><input type="checkbox" @bind="pointEnabled" /> Enabled </label>
+               <input type="range" min="0" max="5" step="0.1" @bind="pointIntensity"
+                                            @bind:event="oninput" />
+                    <input type="color" @bind="pointColor" />
+                </div>
+
+                <div class="light-block">
+                    <h4>Spot</h4>
+                    <label><input type="checkbox" @bind="spotEnabled" /> Enabled </label>
+                   <input type="range" min="0" max="5" step="0.1" @bind="spotIntensity"
+                                                @bind:event="oninput" /> 
+                        <input type="color" @bind="spotColor" />
+                    </div>
+
+                </div>
+                <SceneCodeViewer BlazorCode="@BlazorCode" RazorCode="@RazorCode" HintText="Blazor + Razor snippets" />
+            </div>

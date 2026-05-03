@@ -1,15 +1,18 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using Velvet.Blazor;
+using Velvet.Hosting.Web;
 using Velvet.Core.Assets.Gltf;
-using Velvet.Core.Engine;
+using Velvet.Core.Scene;
 using Velvet.Core.Math;
-using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Cameras;
+using Velvet.Core.Rendering.Controllers;
+using Velvet.Core.Rendering.Input;
 using Velvet.Core.Rendering.Lighting;
-using Velvet.WebGL;
-using BlazorApp = Velvet.Blazor.VelvetApp;
+using Velvet.Core.Rendering.Materials;
+using Velvet.Core.Rendering.Meshes;
+using Velvet.Graphics.WebGL;
+using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
 
 namespace Velvet_Site.Pages;
 
@@ -23,13 +26,14 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     private BlazorApp? app;
     private Scene? scene;
     private Camera? camera;
-    private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
 
-    private bool isMouseDown;
-    private int lastMouseX;
-    private int lastMouseY;
+    // New Material system fields
+    private ShaderMaterial? matteMaterial;
+    private ShaderMaterial? standardMaterial;
+    private ShaderMaterial? brightMaterial;
+    private Dictionary<Mesh, ShaderMaterial> meshMaterialMap = new();
 
     // Debug UI properties
     private bool directionalEnabled = true;
@@ -43,13 +47,6 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-
-        // Fix canvas pixelation by setting correct resolution
-        var rect = await JS.InvokeAsync<CanvasRect>("CanvasHelpers.getCanvasRect", canvasRef);
-        var dpr = await JS.InvokeAsync<double>("CanvasHelpers.getDevicePixelRatio");
-        var canvasWidth = (int)(rect.Width * dpr);
-        var canvasHeight = (int)(rect.Height * dpr);
-        await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
 
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateDefaultAsync);
 
@@ -88,33 +85,24 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
 
         var rootNodes = new List<SceneNode>();
 
-        // Create three material variations
-        // Material 1: Matte Red (low ambient, standard diffuse)
-        var matteMaterial = new Material(
-            albedoColor: new Vector3(1.0f, 0.42f, 0.42f), // Red
-            ambientStrength: 0.03f,
-            diffuseStrength: 0.9f,
-            unlit: false
-        );
+        // Create three new material variations using shader-driven system
+        // Material 1: Matte Red (low ambient)
+        matteMaterial = new ShaderMaterial();
+        matteMaterial.Set("uBaseColor", new Vector3(1.0f, 0.42f, 0.42f));
+        matteMaterial.Set("uAmbientStrength", 0.03f);
 
         // Material 2: Standard Cyan (balanced lighting)
-        var standardMaterial = new Material(
-            albedoColor: new Vector3(0.31f, 0.80f, 0.77f), // Cyan
-            ambientStrength: 0.08f,
-            diffuseStrength: 1.0f,
-            unlit: false
-        );
+        standardMaterial = new ShaderMaterial();
+        standardMaterial.Set("uBaseColor", new Vector3(0.31f, 0.80f, 0.77f));
+        standardMaterial.Set("uAmbientStrength", 0.08f);
 
-        // Material 3: Bright Yellow (high ambient and diffuse)
-        var brightMaterial = new Material(
-            albedoColor: new Vector3(1.0f, 0.90f, 0.43f), // Yellow
-            ambientStrength: 0.15f,
-            diffuseStrength: 1.2f,
-            unlit: false
-        );
+        // Material 3: Bright Yellow (high ambient)
+        brightMaterial = new ShaderMaterial();
+        brightMaterial.Set("uBaseColor", new Vector3(1.0f, 0.90f, 0.43f));
+        brightMaterial.Set("uAmbientStrength", 0.15f);
 
         // Create three instances of Suzanne with different materials
-        var materials = new[] { matteMaterial, standardMaterial, brightMaterial };
+        var newMaterials = new[] { matteMaterial, standardMaterial, brightMaterial };
         var positions = new[] { -2.5f, 0f, 2.5f };
         var names = new[] { "Suzanne_Matte", "Suzanne_Standard", "Suzanne_Bright" };
 
@@ -132,10 +120,10 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
                 name: names[i]
             );
 
-            // Apply material to all meshes
+            // Map all meshes in this node to their material
             foreach (var mesh in GetAllMeshes(suzanneNode))
             {
-                mesh.Material = materials[i];
+                meshMaterialMap[mesh] = newMaterials[i];
             }
 
             rootNodes.Add(suzanneNode);
@@ -153,15 +141,18 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
         app.SetDirectionalEnabled(directionalEnabled);
         app.SetPointEnabled(pointEnabled);
 
-        orbitController = new OrbitController(
+        var orbitController = new OrbitController(
             target: Vector3.Zero,
             yaw: 0.3f,
             pitch: 0.15f,
             distance: 7f,
             minDistance: 3f,
             maxDistance: 20f);
+        app.SetController(orbitController);
 
-        await app.StartAsync(OnFrameAsync);
+        await app.StartAsync(
+            onFrame: OnFrameAsync,
+            beforeDrawMesh: BeforeDrawMesh);
     }
 
     private SceneNode CloneSceneNode(SceneNode original)
@@ -185,53 +176,20 @@ public partial class MaterialDemo : ComponentBase, IAsyncDisposable
         return meshes;
     }
 
-    private void OnCanvasMouseDown(MouseEventArgs e)
+    private async Task BeforeDrawMesh(Mesh mesh)
     {
-        isMouseDown = true;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
+        if (app is null) return;
 
-    private void OnCanvasMouseMove(MouseEventArgs e)
-    {
-        if (!isMouseDown || orbitController == null) return;
-
-        int dx = (int)e.ClientX - lastMouseX;
-        int dy = (int)e.ClientY - lastMouseY;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-
-        var yawDelta = -dx * 0.005f;
-        var pitchDelta = dy * 0.005f;
-
-        orbitController.ApplyYaw(yawDelta);
-        orbitController.ApplyPitch(pitchDelta);
-    }
-
-    private void OnCanvasMouseUp(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasMouseLeave(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasWheel(WheelEventArgs e)
-    {
-        if (orbitController == null) return;
-
-        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
-        orbitController.ApplyZoomMultiplier(zoomMultiplier);
+        // Look up the material for this specific mesh
+        if (meshMaterialMap.TryGetValue(mesh, out var material))
+        {
+            await material.ApplyAsync(app.Program).ConfigureAwait(false);
+        }
     }
 
     private async Task OnFrameAsync(float deltaTime)
     {
-        if (camera == null || orbitController == null || scene == null || app == null) return;
-
-        // Update camera from orbit controller
-        orbitController.UpdateCamera(camera);
+        if (scene == null || app == null) return;
 
         // Update light properties from UI
         if (directional != null)

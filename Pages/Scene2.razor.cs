@@ -1,62 +1,106 @@
 using System.Net.Http;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
-using Velvet.Blazor;
+using Velvet.Hosting.Web;
 using Velvet.Core.Animation;
 using Velvet.Core.Assets.Gltf;
 using Velvet.Core.Math;
-using Velvet.Core.Rendering;
+using Velvet.Core.Rendering.Cameras;
+using Velvet.Core.Rendering.Controllers;
 using Velvet.Core.Rendering.Lighting;
-using Velvet.WebGL;
-using BlazorApp = Velvet.Blazor.VelvetApp;
-using EngineScene = Velvet.Core.Engine.Scene;
+using Velvet.Graphics.WebGL;
+
+using BlazorApp = Velvet.Hosting.Web.BlazorVelvetHost;
+using EngineScene = Velvet.Core.Scene.Scene;
 
 namespace Velvet_Site.Pages;
 
 public partial class Scene2 : ComponentBase, IAsyncDisposable
 {
+    // ==============================
+    // Injected services
+    // ==============================
     [Inject] private IJSRuntime JS { get; set; } = default!;
     [Inject] private HttpClient Http { get; set; } = default!;
 
+    // ==============================
+    // Canvas
+    // ==============================
     private ElementReference canvasRef;
 
+    // ==============================
+    // Engine state
+    // ==============================
     private BlazorApp? app;
     private EngineScene? scene;
     private Camera? camera;
-    private OrbitController? orbitController;
     private DirectionalLight? directional;
     private PointLight? point;
     private SpotLight? spot;
     private Animator? animator;
     private List<AnimationClip>? animationClips;
+    private string? activeAnimationClipName;
+    private bool isAnimationDropdownOpen;
 
-    private bool isMouseDown;
-    private int lastMouseX;
-    private int lastMouseY;
+    // ==============================
+    // Code snippets (curated, not full dump)
+    // ==============================
+    private const string BlazorCode = """
+// Blazor Example
+@page "/scene2"
 
+<canvas @ref="canvasRef"></canvas>
+
+var app = await BlazorVelvetHost.CreateAsync(
+    canvasRef,
+    JS,
+    ShaderProgram.CreateSkinnedAsync);
+
+// Load model
+var (scene, animations) =
+    await GltfLoader.LoadFromUrl(Http, "models/Fox.glb");
+
+var animator = new Animator(scene);
+
+await app.StartAsync(dt =>
+{
+    animator.Update(dt);
+    app.Render(scene);
+});
+""";
+
+    private const string RazorCode = """
+// Razor (SSR) Example
+<canvas id="fox-canvas"></canvas>
+
+<script>
+    window.addEventListener("load", () => {
+        window.Velvet.start("fox-canvas");
+    });
+</script>
+""";
+
+
+    // ==============================
+    // Lifecycle
+    // ==============================
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        // Fix canvas pixelation by setting correct resolution
-        var rect = await JS.InvokeAsync<CanvasRect>("CanvasHelpers.getCanvasRect", canvasRef);
-        var dpr = await JS.InvokeAsync<double>("CanvasHelpers.getDevicePixelRatio");
-        var canvasWidth = (int)(rect.Width * dpr);
-        var canvasHeight = (int)(rect.Height * dpr);
-        await JS.InvokeVoidAsync("CanvasHelpers.setCanvasResolution", canvasRef, canvasWidth, canvasHeight);
-
         app = await BlazorApp.CreateAsync(canvasRef, JS, ShaderProgram.CreateSkinnedAsync);
 
+        // Camera
         camera = new Camera(
             position: new Vector3(0, 20f, 2.6f),
             target: new Vector3(0, 0, 0),
             up: Vector3.UnitY,
-            fovYRadians: 60.0f * (System.MathF.PI / 180.0f),
-            aspectRatio: 16.0f / 9.0f,
+            fovYRadians: 60f * (MathF.PI / 180f),
+            aspectRatio: 16f / 9f,
             nearPlane: 0.1f,
-            farPlane: 100.0f);
+            farPlane: 100f);
 
+        // Lights
         directional = new DirectionalLight(
             direction: new Vector3(0.4f, -1.0f, -0.25f),
             color: new Vector3(1, 1, 1),
@@ -70,42 +114,58 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             linear: 0.14f,
             quadratic: 0.07f);
 
-        // Keep spotlight uniforms valid; disable by setting intensity to 0.
         spot = new SpotLight(
             position: new Vector3(0.0f, 2.2f, 2.2f),
             direction: new Vector3(0.0f, -1.0f, -1.0f),
-            color: new Vector3(1.0f, 1.0f, 1.0f),
+            color: new Vector3(1, 1, 1),
             intensity: 0.0f,
-            cutoff: 12.0f * (System.MathF.PI / 180.0f),
-            outerCutoff: 20.0f * (System.MathF.PI / 180.0f),
+            cutoff: 12f * (MathF.PI / 180f),
+            outerCutoff: 20f * (MathF.PI / 180f),
             constant: 1.0f,
             linear: 0.09f,
             quadratic: 0.032f);
 
-        var bytes = await Http.GetByteArrayAsync("models/Fox.glb");
-        var loadResult = await GltfLoader.LoadSceneWithAnimations(bytes, "models");
+        var loadResult = await GltfLoader.LoadFromUrl(Http, "models/Fox.glb");
+
         scene = loadResult.Scene;
         animationClips = loadResult.Animations;
 
         animator = new Animator(scene);
-        if (animationClips.Count > 0)
+
+        var initialClip = animationClips.FirstOrDefault(clip => clip.Name.Contains("Walk", StringComparison.OrdinalIgnoreCase))
+            ?? animationClips.FirstOrDefault();
+
+        if (initialClip is not null)
         {
-            animator.PlayClip(animationClips[1]);
+            SetActiveClip(initialClip);
         }
 
         app.Add(scene);
 
-        var bounds = scene.ComputeBounds();
-        camera.Frame(bounds, frameMultiplier: 1.3f);
+        // Skybox
+        await app.SetCubemapSkybox(
+            "skybox/px.png",
+            "skybox/nx.png",
+            "skybox/py.png",
+            "skybox/ny.png",
+            "skybox/pz.png",
+            "skybox/nz.png");
 
+        // Frame camera
+        var bounds = scene.ComputeBounds();
+        camera.Frame(bounds, 1.3f);
+
+        // Assign
         app.Camera = camera;
         app.DirectionalLight = directional;
         app.PointLight = point;
         app.SpotLight = spot;
+
         app.SetDirectionalEnabled(true);
         app.SetPointEnabled(true);
 
-        orbitController = new OrbitController(
+        // Orbit controller
+        var orbitController = new OrbitController(
             target: bounds.Center,
             yaw: 0f,
             pitch: 0.3f,
@@ -113,64 +173,60 @@ public partial class Scene2 : ComponentBase, IAsyncDisposable
             minDistance: bounds.Radius * 0.5f,
             maxDistance: bounds.Radius * 10f);
 
+        app.SetController(orbitController);
+
         await app.StartAsync(OnFrameAsync);
+        await InvokeAsync(StateHasChanged);
     }
 
-    private void OnCanvasMouseDown(MouseEventArgs e)
+    private bool HasAnimations => animationClips is { Count: > 0 };
+
+    private string ActiveAnimationLabel => animationClips?.FirstOrDefault(clip => IsActiveClip(clip))?.Name ?? "Animations";
+
+    private bool IsActiveClip(AnimationClip clip)
+        => string.Equals(activeAnimationClipName, clip.Name, StringComparison.Ordinal);
+
+    private void ToggleAnimationDropdown()
     {
-        isMouseDown = true;
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
+        if (!HasAnimations)
+            return;
+
+        isAnimationDropdownOpen = !isAnimationDropdownOpen;
     }
 
-    private void OnCanvasMouseMove(MouseEventArgs e)
+    private void SetActiveClip(AnimationClip clip)
     {
-        if (!isMouseDown || orbitController is null) return;
+        if (animator is null)
+            return;
 
-        var deltaX = (int)e.ClientX - lastMouseX;
-        var deltaY = (int)e.ClientY - lastMouseY;
+        if (string.Equals(activeAnimationClipName, clip.Name, StringComparison.Ordinal))
+            return;
 
-        var yawDelta = -deltaX * 0.005f;
-        var pitchDelta = deltaY * 0.005f;
-
-        orbitController.ApplyYaw(yawDelta);
-        orbitController.ApplyPitch(pitchDelta);
-
-        lastMouseX = (int)e.ClientX;
-        lastMouseY = (int)e.ClientY;
-    }
-
-    private void OnCanvasMouseUp(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasMouseLeave(MouseEventArgs e)
-    {
-        isMouseDown = false;
-    }
-
-    private void OnCanvasWheel(WheelEventArgs e)
-    {
-        if (orbitController is null) return;
-
-        var zoomMultiplier = 1.0f + (float)e.DeltaY * 0.001f;
-        orbitController.ApplyZoomMultiplier(zoomMultiplier);
-    }
-
-    private async Task OnFrameAsync(float dt)
-    {
-        if (app is null || camera is null || orbitController is null) return;
-
-        orbitController.UpdateCamera(camera);
-
-        if (scene is not null && animator is not null)
+        if (!string.IsNullOrWhiteSpace(activeAnimationClipName))
         {
-            animator.Update(dt);
-            app.Render(scene);
+            animator.StopClip(activeAnimationClipName);
         }
 
-        await Task.CompletedTask;
+        animator.PlayClip(clip);
+        activeAnimationClipName = clip.Name;
+    }
+
+    private Task SelectAnimationClipAsync(AnimationClip clip)
+    {
+        SetActiveClip(clip);
+        isAnimationDropdownOpen = false;
+        return Task.CompletedTask;
+    }
+
+    private Task OnFrameAsync(float dt)
+    {
+        if (app is null || scene is null || animator is null)
+            return Task.CompletedTask;
+
+        animator.Update(dt);
+        app.Render(scene);
+
+        return Task.CompletedTask;
     }
 
     public async ValueTask DisposeAsync()
