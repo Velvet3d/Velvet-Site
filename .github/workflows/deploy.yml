@@ -19,7 +19,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Publish
-        run: dotnet publish Velvet-Site/Velvet-Site.csproj -c Release -o publish
+        run: dotnet publish Velvet-Site.csproj -c Release -o publish
 
       - name: Copy to deploy repo
         run: |
