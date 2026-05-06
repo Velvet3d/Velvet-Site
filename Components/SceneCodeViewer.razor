@@ -51,16 +51,13 @@
                         Razor (SSR)
                     </a>
 
-                    @if (!string.IsNullOrWhiteSpace(RazorHref))
-                    {
-                        <a class="scene-code-tab-link"
-                           href="@RazorHref"
-                           target="_blank"
-                           rel="noreferrer"
-                           aria-label="Open Razor link">
-                            ↗
-                        </a>
-                    }
+                    <a class="scene-code-tab-link"
+                       href="https://github.com/Velvet3d/Velvet-Razor"
+                       target="_blank"
+                       rel="noreferrer"
+                       aria-label="Open Velvet-Razor repository">
+                        ↗
+                    </a>
                 </div>
 
                 <button type="button" class="scene-code-copy" @onclick="CopyCurrentTabAsync">
@@ -69,6 +66,19 @@
             </div>
 
             <pre class="scene-code-block"><code>@CurrentCode</code></pre>
+
+            @if (activeTab == CodeTab.Razor)
+            {
+                <div class="scene-code-warning" style="margin-top: 1rem; padding: 1rem; background-color: #fff3cd; border: 1px solid #ffc107; border-radius: 0.25rem; color: #856404;">
+                    <strong>⚠️ Velvet Razor (SSR) is still not stable and under development.</strong>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        For the latest updates and development progress, visit the
+                        <a href="https://github.com/Velvet3d/Velvet-Razor" target="_blank" rel="noreferrer" style="color: #856404; text-decoration: underline;">
+                            Velvet-Razor repository
+                        </a>.
+                    </p>
+                </div>
+            }
         </section>
     }
 </div>
